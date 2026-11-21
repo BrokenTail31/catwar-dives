@@ -1,0 +1,2057 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Статистика нырков CatWar — Озёрный трекер</title>
+
+  <!-- Google Fonts: Inter (с поддержкой кириллицы) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            lake: {
+              950: '#071017',
+              900: '#0b1720',
+              850: '#0f1f2b',
+              800: '#11222e',
+              700: '#173142',
+              600: '#1e4259',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Атмосфера глубокого озера и тонкие стеклянные эффекты */
+    body {
+      background-color: #0b1720;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 15% -10%, rgba(20, 120, 140, 0.22), transparent 65%),
+        radial-gradient(ellipse 65% 45% at 85% 5%, rgba(16, 85, 115, 0.2), transparent 60%),
+        radial-gradient(ellipse 70% 60% at 50% 105%, rgba(13, 60, 82, 0.28), transparent 70%);
+      background-attachment: fixed;
+      color: #e2eef5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .glass-card {
+      background: linear-gradient(155deg, rgba(17, 34, 46, 0.78) 0%, rgba(11, 23, 32, 0.82) 100%);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(125, 211, 252, 0.13);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .glass-subcard {
+      background: rgba(11, 23, 32, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    /* Аккуратные скроллбары */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(7, 16, 23, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.25);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.45);
+    }
+
+    /* Убираем стандартные стрелки у number-полей */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    /* Плавное появление вкладок */
+    .tab-panel {
+      animation: fadeSlideIn 0.22s ease-out;
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-100">
+
+  <!-- Контейнер для уведомлений (Toast) -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-[calc(100%-2rem)] pointer-events-none"></div>
+
+  <!-- Модальное окно подтверждения (вместо confirm/alert) -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 border border-cyan-400/20">
+      <div class="flex items-start gap-3">
+        <div id="confirm-icon" class="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-400/30 flex items-center justify-center text-xl shrink-0">⚠️</div>
+        <div class="flex-1 min-w-0">
+          <h3 id="confirm-title" class="text-lg font-bold text-slate-100">Подтверждение</h3>
+          <p id="confirm-message" class="mt-1.5 text-sm text-slate-300 leading-relaxed"></p>
+        </div>
+      </div>
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button id="confirm-cancel-btn" type="button" class="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 text-sm font-medium transition">Отмена</button>
+        <button id="confirm-ok-btn" type="button" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold transition shadow-lg shadow-rose-950/50">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно выбора категории для тега в предпросмотре -->
+  <div id="reclassify-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm">
+    <div class="glass-card rounded-2xl max-w-lg w-full p-5 sm:p-6 border border-cyan-400/25">
+      <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-700/50">
+        <h3 class="text-base sm:text-lg font-bold text-cyan-100">Изменить категорию нырка</h3>
+        <button id="reclassify-close" type="button" class="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-100 transition">✕</button>
+      </div>
+      <div class="mt-3 p-3 rounded-xl bg-lake-950/70 border border-slate-700/50 text-xs sm:text-sm text-slate-300 italic break-words" id="reclassify-snippet"></div>
+      <div id="reclassify-options" class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[55vh] overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- Шапка приложения -->
+  <header class="sticky top-0 z-30 border-b border-cyan-400/10 bg-lake-900/85 backdrop-blur-xl">
+    <div class="max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <!-- Логотип и название -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/25 via-teal-500/20 to-amber-300/20 border border-cyan-300/25 flex items-center justify-center text-xl shadow-inner">
+            🐚
+          </div>
+          <div>
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-50 leading-tight">
+              Статистика нырков <span class="text-cyan-300">CatWar</span>
+            </h1>
+            <p class="text-[11px] sm:text-xs text-slate-400">Озёрная Вселенная • автосохранение в браузере</p>
+          </div>
+        </div>
+        <!-- Мобильный мини-бейдж всего нырков -->
+        <div class="md:hidden px-3 py-1.5 rounded-xl bg-lake-800/90 border border-cyan-400/15 text-xs font-semibold text-cyan-200">
+          Нырков: <span id="header-total-mobile">0</span>
+        </div>
+      </div>
+
+      <!-- Навигация по вкладкам -->
+      <nav class="grid grid-cols-2 sm:flex items-center gap-1.5 bg-lake-950/70 p-1 rounded-2xl border border-slate-700/40" aria-label="Основные разделы">
+        <button data-tab="overview" class="tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+          <span>🌊</span><span>Обзор и ввод</span>
+        </button>
+        <button data-tab="shells" class="tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+          <span>🐚</span><span>Ракушки и комки</span>
+        </button>
+        <button data-tab="settings" class="tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+          <span>⚙️</span><span>Баллы и настройки</span>
+        </button>
+        <button data-tab="journal" class="tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+          <span>📜</span><span>Журнал</span>
+          <span id="journal-count-badge" class="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-200">0</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Основной контент -->
+  <main class="max-w-6xl mx-auto px-3 sm:px-6 py-5 sm:py-7 pb-16">
+
+    <!-- ===================================================================== -->
+    <!-- ВКЛАДКА 1: ОБЗОР И ВВОД -->
+    <!-- ===================================================================== -->
+    <section id="tab-overview" class="tab-panel space-y-6">
+
+      <!-- KPI-карточки -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <!-- Всего нырков -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+            <span>Всего нырков</span>
+            <span class="text-base">🌊</span>
+          </div>
+          <div id="kpi-total" class="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-50 tracking-tight">0</div>
+          <div id="kpi-sessions-sub" class="mt-1 text-xs text-cyan-300/80">0 сессий в журнале</div>
+        </div>
+
+        <!-- Улов -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+            <span>Улов (ресурсы и др.)</span>
+            <span class="text-base">✨</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpi-catch" class="text-2xl sm:text-3xl font-extrabold text-emerald-300 tracking-tight">0</span>
+            <span id="kpi-catch-pct" class="text-xs sm:text-sm font-semibold text-emerald-400/90">0%</span>
+          </div>
+          <div class="mt-1 text-xs text-slate-400">Включая ресурсы, еду и тварей</div>
+        </div>
+
+        <!-- Без улова -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+            <span>Без улова (пусто)</span>
+            <span class="text-base">🫧</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpi-empty" class="text-2xl sm:text-3xl font-extrabold text-slate-200 tracking-tight">0</span>
+            <span id="kpi-empty-pct" class="text-xs sm:text-sm font-semibold text-slate-400">0%</span>
+          </div>
+          <div class="mt-1 text-xs text-slate-400">Пустые и неудачные нырки</div>
+        </div>
+
+        <!-- Пустых подряд -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+            <span>Пустых подряд</span>
+            <span class="text-base">❄️</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpi-streak-cur" class="text-2xl sm:text-3xl font-extrabold text-amber-200 tracking-tight">0</span>
+            <span class="text-xs text-slate-400">сейчас</span>
+          </div>
+          <div class="mt-1 text-xs text-rose-300/90">
+            Антирекорд: <strong id="kpi-streak-max" class="font-bold">0</strong> подряд
+          </div>
+        </div>
+
+        <!-- Искры (редкая валюта) -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden col-span-2 sm:col-span-1 border border-amber-300/35 shadow-[0_0_24px_-8px_rgba(251,191,36,0.35)]">
+          <div class="flex items-center justify-between text-xs font-medium text-amber-200/90">
+            <span>Искры (валюта)</span>
+            <span class="text-base">✨</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpi-sparks" class="text-2xl sm:text-3xl font-extrabold text-amber-300 tracking-tight">0</span>
+            <span id="kpi-sparks-pct" class="text-xs sm:text-sm font-semibold text-amber-200/80">0%</span>
+          </div>
+          <div class="mt-1 text-xs text-amber-200/70">Редкий дополнительный улов</div>
+        </div>
+      </div>
+
+      <!-- УМНЫЙ ПАРСЕР ИСТОРИИ -->
+      <div class="glass-card rounded-2xl p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
+              <span>📋</span> Умный парсер истории нырков
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+              Вставьте лог из игровой CatWar — подходит для кота («Нырнул.») и кошки («Нырнула.»), лишние действия очищаются автоматически.
+            </p>
+          </div>
+        </div>
+
+        <textarea
+          id="parser-input"
+          rows="5"
+          placeholder="Вставьте скопированную историю из игровой CatWar сюда...&#10;Например:&#10;Нырнула. Обнаружила целебную водоросль.&#10;Поплавала. Подняла предмет.&#10;Нырнула. Почти достала со дна красивую ракушку, но в последний момент она выскользнула из лап."
+          class="w-full rounded-2xl bg-lake-950/80 border border-cyan-400/20 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 outline-none p-3.5 sm:p-4 text-sm text-slate-100 placeholder-slate-500 transition resize-y"
+        ></textarea>
+
+        <!-- Кнопки управления парсером -->
+        <div class="mt-3 flex flex-wrap items-center gap-2.5">
+          <button id="btn-add-dives" type="button" disabled class="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-40 disabled:cursor-not-allowed text-lake-950 font-bold text-sm transition shadow-lg shadow-cyan-950/50 flex items-center justify-center gap-2">
+            <span>➕</span><span>Добавить в статистику</span>
+          </button>
+          <button id="btn-load-sample" type="button" class="px-4 py-3 rounded-xl bg-lake-800 hover:bg-lake-700 border border-cyan-400/20 text-cyan-200 font-semibold text-sm transition">
+            ✨ Вставить пример истории
+          </button>
+          <button id="btn-clear-input" type="button" class="px-4 py-3 rounded-xl bg-slate-800/70 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 font-medium text-sm transition">
+            Очистить поле
+          </button>
+        </div>
+
+        <!-- Живой предпросмотр разбора -->
+        <div id="parser-preview-box" class="hidden mt-4 pt-4 border-t border-slate-700/50">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+              <span class="font-bold text-cyan-200">Предпросмотр разбора:</span>
+              <span id="preview-count-badge" class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-400/30 text-cyan-200 font-semibold">0 нырков</span>
+              <span id="preview-cancelled-badge" class="hidden px-2.5 py-0.5 rounded-full bg-slate-700/70 text-slate-300 text-xs"></span>
+            </div>
+            <span class="text-[11px] sm:text-xs text-slate-400">💡 Нажмите на любой тег, чтобы вручную сменить категорию</span>
+          </div>
+          <div id="preview-tags" class="flex flex-wrap gap-2 max-h-60 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+
+      <!-- РЕСУРСЫ И УЛОВ -->
+      <div class="glass-card rounded-2xl p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-5">
+          <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
+            <span>📊</span> Ресурсы и улов
+          </h2>
+          <span class="text-xs text-slate-400">Проценты рассчитаны от общего числа нырков</span>
+        </div>
+
+        <div id="resources-breakdown" class="space-y-4">
+          <!-- Генерируется динамически из JS -->
+        </div>
+      </div>
+
+      <!-- ПОТЕРЯННОЕ ЗДОРОВЬЕ И БАЛЛЫ -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+        <!-- Потерянное здоровье -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base sm:text-lg font-bold text-rose-200 flex items-center gap-2">
+                <span>❤️‍🩹</span> Потерянное здоровье
+              </h2>
+              <button type="button" onclick="switchTab('settings')" class="text-xs text-cyan-300 hover:text-cyan-200 underline underline-offset-2">Настроить урон</button>
+            </div>
+            <div id="hp-loss-list" class="space-y-2.5"></div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-rose-400/15 flex items-center justify-between">
+            <span class="text-sm font-semibold text-slate-300">Итого потеряно здоровья:</span>
+            <span id="hp-loss-total" class="text-xl sm:text-2xl font-extrabold text-rose-400">0%</span>
+          </div>
+        </div>
+
+        <!-- Баллы -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base sm:text-lg font-bold text-amber-200 flex items-center gap-2">
+                <span>🏆</span> Подсчёт баллов
+              </h2>
+              <button type="button" onclick="switchTab('settings')" class="text-xs text-cyan-300 hover:text-cyan-200 underline underline-offset-2">Настроить расценки</button>
+            </div>
+            <div id="points-breakdown-list" class="space-y-2.5"></div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-amber-300/20 flex items-center justify-between">
+            <span class="text-sm font-semibold text-slate-300">Общий итог баллов:</span>
+            <span id="points-total" class="text-xl sm:text-2xl font-extrabold text-amber-300">0</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ВКЛАДКА 2: РАКУШКИ И КОМКИ -->
+    <!-- ===================================================================== -->
+    <section id="tab-shells" class="tab-panel hidden space-y-6">
+
+      <!-- Раздел 1: Учёт ракушек и +ПУ -->
+      <div class="glass-card rounded-2xl p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-amber-200 flex items-center gap-2">
+              <span>🐚</span> Учёт ракушек и +ПУ
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+              Названия, значения +ПУ и баллы можно редактировать прямо в таблице под вашу вселенную.
+            </p>
+          </div>
+          <button id="btn-add-shell-type" type="button" class="px-4 py-2.5 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-300/30 text-amber-200 text-xs sm:text-sm font-semibold transition shrink-0">
+            + Добавить вид ракушки
+          </button>
+        </div>
+
+        <!-- Информационная строка сверки -->
+        <div id="shell-sync-banner" class="mb-4 p-3.5 rounded-xl bg-lake-950/75 border border-amber-300/20 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span class="text-slate-300">Поймано ракушек по истории нырков: <strong id="shells-from-history" class="text-amber-300 text-base">0</strong></span>
+            <span class="text-slate-600 hidden sm:inline">|</span>
+            <span class="text-slate-300">Распределено по видам: <strong id="shells-distributed" class="text-cyan-300 text-base">0</strong></span>
+          </div>
+          <span id="shells-sync-status" class="px-2.5 py-1 rounded-lg text-xs font-semibold"></span>
+        </div>
+
+        <!-- Сводка по +ПУ -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <div class="glass-subcard rounded-xl p-3.5">
+            <div class="text-xs text-slate-400">В наличии (шт.)</div>
+            <div id="shells-total-instock" class="mt-1 text-xl font-extrabold text-slate-100">0 шт.</div>
+          </div>
+          <div class="glass-subcard rounded-xl p-3.5 border-amber-300/20">
+            <div class="text-xs text-amber-200/80">В куче +ПУ (накоплено в наличии)</div>
+            <div id="shells-total-pile-pu" class="mt-1 text-xl font-extrabold text-amber-300">+0 ПУ</div>
+          </div>
+          <div class="glass-subcard rounded-xl p-3.5 border-cyan-400/20">
+            <div class="text-xs text-cyan-200/80">Всего получено +ПУ (со съеденными)</div>
+            <div id="shells-total-all-pu" class="mt-1 text-xl font-extrabold text-cyan-300">+0 ПУ</div>
+          </div>
+        </div>
+
+        <!-- Таблица ракушек (адаптивный скролл на узких экранах) -->
+        <div class="overflow-x-auto -mx-2 px-2">
+          <table class="w-full text-left border-collapse min-w-[720px]">
+            <thead>
+              <tr class="border-b border-slate-700/60 text-[11px] uppercase tracking-wider text-slate-400">
+                <th class="py-2.5 pr-3">Вид ракушки</th>
+                <th class="py-2.5 px-2 w-24 text-center">+ПУ</th>
+                <th class="py-2.5 px-2 w-24 text-center">Баллы</th>
+                <th class="py-2.5 px-2 text-center">Поймано</th>
+                <th class="py-2.5 px-2 text-center">Съедено / отдано</th>
+                <th class="py-2.5 px-2 text-right">В наличии</th>
+                <th class="py-2.5 px-2 text-right">В куче +ПУ</th>
+                <th class="py-2.5 pl-2 text-right">Всего +ПУ</th>
+                <th class="py-2.5 pl-2 w-9"></th>
+              </tr>
+            </thead>
+            <tbody id="shells-table-body" class="divide-y divide-slate-800/70 text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Раздел 2: Трекер комков -->
+      <div class="glass-card rounded-2xl p-4 sm:p-6">
+        <div class="mb-5">
+          <h2 class="text-base sm:text-lg font-bold text-teal-200 flex items-center gap-2">
+            <span>🧶</span> Трекер комков водорослей
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+            Выловленные комки подтягиваются автоматически из истории нырков. Отмечайте спавн и содержимое при открытии.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Выловлено комков -->
+          <div class="glass-subcard rounded-2xl p-4 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-medium text-slate-400">Выловлено комков (история + поправка)</div>
+              <div class="mt-1.5 flex items-baseline gap-2">
+                <span id="lumps-caught-total" class="text-2xl font-extrabold text-teal-300">0</span>
+                <span class="text-xs text-slate-400">(из нырков: <span id="lumps-from-history">0</span>)</span>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-700/40 flex items-center justify-between gap-2">
+              <span class="text-xs text-slate-400">Ручная поправка:</span>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="adjustLumpField('manualOffset', -1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition">−</button>
+                <input id="lump-manual-offset" type="number" class="w-14 h-8 rounded-lg bg-lake-950 border border-slate-700 text-center text-sm font-semibold text-slate-100" onchange="setLumpField('manualOffset', this.value)" />
+                <button type="button" onclick="adjustLumpField('manualOffset', 1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold transition">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Собрано со спавна -->
+          <div class="glass-subcard rounded-2xl p-4 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-medium text-slate-400">Собрано со спавна</div>
+              <div class="mt-2 flex items-center gap-2">
+                <button type="button" onclick="adjustLumpField('spawnCollected', -1)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-lg transition">−</button>
+                <input id="lump-spawn" type="number" min="0" class="flex-1 h-10 rounded-xl bg-lake-950 border border-slate-700 text-center text-lg font-bold text-slate-100" onchange="setLumpField('spawnCollected', this.value)" />
+                <button type="button" onclick="adjustLumpField('spawnCollected', 1)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-lg transition">+</button>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-700/40 flex items-center justify-between text-xs">
+              <span class="text-slate-400">Всего комков (вылов + спавн):</span>
+              <strong id="lumps-grand-total" class="text-base text-cyan-300">0</strong>
+            </div>
+          </div>
+
+          <!-- Открытие: ракушки и мальки -->
+          <div class="glass-subcard rounded-2xl p-4 space-y-3 md:col-span-2 lg:col-span-1">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium text-amber-200">🐚 Выпало ракушек</span>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="adjustLumpField('shellsDropped', -1)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-200 font-bold transition">−</button>
+                <input id="lump-shells" type="number" min="0" class="w-16 h-9 rounded-xl bg-lake-950 border border-amber-400/30 text-center text-sm font-bold text-amber-200" onchange="setLumpField('shellsDropped', this.value)" />
+                <button type="button" onclick="adjustLumpField('shellsDropped', 1)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-200 font-bold transition">+</button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium text-orange-200">🐟 Выпало мальков</span>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="adjustLumpField('fryDropped', -1)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-orange-200 font-bold transition">−</button>
+                <input id="lump-fry" type="number" min="0" class="w-16 h-9 rounded-xl bg-lake-950 border border-orange-400/30 text-center text-sm font-bold text-orange-200" onchange="setLumpField('fryDropped', this.value)" />
+                <button type="button" onclick="adjustLumpField('fryDropped', 1)" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-orange-200 font-bold transition">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Индикатор удачи комков -->
+        <div class="mt-4 p-4 rounded-2xl bg-lake-950/70 border border-cyan-400/15">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-slate-200">🍀 Удача комков (шанс ракушки)</span>
+              <span id="lump-luck-label" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">Нет открытых</span>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <span id="lump-luck-pct" class="text-xl font-extrabold text-amber-300">0%</span>
+              <span id="lump-opened-count" class="text-xs text-slate-400">(0 открыто)</span>
+            </div>
+          </div>
+          <div class="w-full h-3 rounded-full bg-slate-800/90 overflow-hidden">
+            <div id="lump-luck-bar" class="h-full rounded-full bg-gradient-to-r from-teal-400 via-amber-300 to-yellow-200 transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ВКЛАДКА 3: БАЛЛЫ И НАСТРОЙКИ -->
+    <!-- ===================================================================== -->
+    <section id="tab-settings" class="tab-panel hidden space-y-6">
+
+      <!-- Баллы за ресурсы и Урон от тварей -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <!-- Таблица баллов -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h2 class="text-base sm:text-lg font-bold text-amber-200 flex items-center gap-2">
+              <span>🏆</span> Настройка баллов
+            </h2>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="applyPointsPreset('sk')" class="px-3 py-1.5 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-300/30 text-amber-200 text-xs font-semibold transition">Стандарт СК</button>
+              <button type="button" onclick="applyPointsPreset('equal')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600/50 text-slate-200 text-xs font-semibold transition">По 1 баллу</button>
+            </div>
+          </div>
+
+          <div class="space-y-3" id="settings-points-form">
+            <!-- Заполняется JS -->
+          </div>
+
+          <label class="mt-4 pt-3 border-t border-slate-700/50 flex items-start gap-2.5 cursor-pointer text-xs sm:text-sm text-slate-300">
+            <input id="setting-use-shell-table-pts" type="checkbox" class="mt-0.5 w-4 h-4 rounded accent-amber-400" onchange="toggleUseShellTablePoints(this.checked)" />
+            <span>Считать баллы за распределённые ракушки по таблице видов (из вкладки «Ракушки и комки»), а нераспределённые — по базовой ставке выше.</span>
+          </label>
+        </div>
+
+        <!-- Настройка потери здоровья -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6 flex flex-col justify-between">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-rose-200 flex items-center gap-2 mb-1">
+              <span>❤️‍🩹</span> Потеря здоровья от гадов
+            </h2>
+            <p class="text-xs text-slate-400 mb-4">Укажите, сколько % здоровья отнимает встреча с каждым существом.</p>
+            <div class="space-y-3" id="settings-hp-form">
+              <!-- Заполняется JS -->
+            </div>
+          </div>
+
+          <!-- Резервное копирование -->
+          <div class="mt-6 pt-5 border-t border-slate-700/50">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-bold text-cyan-200 flex items-center gap-2"><span>💾</span> Резервное копирование</h3>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-400/20">Автосохранение вкл.</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button id="btn-export-json" type="button" class="px-4 py-2.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-200 text-xs sm:text-sm font-semibold transition">
+                ⬇️ Скачать копию (.json)
+              </button>
+              <label class="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50 text-slate-200 text-xs sm:text-sm font-semibold transition text-center cursor-pointer">
+                ⬆️ Загрузить из файла (.json)
+                <input id="input-import-json" type="file" accept=".json,application/json" class="hidden" />
+              </label>
+            </div>
+            <button id="btn-reset-all" type="button" class="mt-2.5 w-full px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-400/30 text-rose-300 text-xs sm:text-sm font-semibold transition">
+              🗑️ Сбросить всю статистику
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Пользовательские правила распознавания -->
+      <div class="glass-card rounded-2xl p-4 sm:p-6">
+        <h2 class="text-base sm:text-lg font-bold text-cyan-200 flex items-center gap-2">
+          <span>🧩</span> Пользовательские правила распознавания
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-0.5 mb-4">
+          Если в игре появились новые ивентовые предметы или фразы другой вселенной — добавьте часть фразы и выберите категорию. Эти правила имеют высший приоритет.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-2.5 mb-4">
+          <input id="custom-rule-phrase" type="text" placeholder="Часть фразы из игровой (напр.: жемчужину)" class="flex-1 px-3.5 py-2.5 rounded-xl bg-lake-950/80 border border-slate-700 focus:border-cyan-400/60 outline-none text-sm text-slate-100 placeholder-slate-500" />
+          <select id="custom-rule-subtype" class="px-3.5 py-2.5 rounded-xl bg-lake-950/80 border border-slate-700 focus:border-cyan-400/60 outline-none text-sm text-slate-100"></select>
+          <button id="btn-add-custom-rule" type="button" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-lake-950 font-bold text-sm transition shrink-0">
+            Добавить
+          </button>
+        </div>
+
+        <div id="custom-rules-list" class="space-y-2"></div>
+      </div>
+
+      <!-- Ручная поправка / Перенос старой статистики -->
+      <div class="glass-card rounded-2xl p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
+              <span>📥</span> Стартовые значения (перенос из старой таблицы)
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+              Введите уже накопленные ранее результаты — они автоматически прибавятся к общей статистике без копирования старых логов.
+            </p>
+          </div>
+          <button type="button" onclick="clearStartingStats()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition self-start">
+            Обнулить поправки
+          </button>
+        </div>
+
+        <div id="starting-stats-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <!-- Заполняется JS -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- ВКЛАДКА 4: ЖУРНАЛ НЫРКОВ -->
+    <!-- ===================================================================== -->
+    <section id="tab-journal" class="tab-panel hidden space-y-5">
+
+      <!-- Поиск и фильтры -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+            <input id="journal-search" type="text" placeholder="Поиск по тексту лога или названию улова..." class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-lake-950/80 border border-slate-700 focus:border-cyan-400/60 outline-none text-sm text-slate-100 placeholder-slate-500" />
+          </div>
+        </div>
+        <div id="journal-filter-pills" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <!-- Список сессий -->
+      <div id="journal-list" class="space-y-3"></div>
+
+    </section>
+
+  </main>
+
+  <script>
+    /* =========================================================================
+       КОНФИГУРАЦИЯ КАТЕГОРИЙ И ПОДТИПОВ УЛОВА
+       ========================================================================= */
+    const CATEGORIES = {
+      heal: {
+        label: 'Хилресы',
+        icon: '🌿',
+        barColor: 'from-emerald-500 to-teal-400',
+        textColor: 'text-emerald-300',
+        badgeBg: 'bg-emerald-500/15 border-emerald-400/30 text-emerald-200',
+      },
+      food: {
+        label: 'Еда',
+        icon: '🐟',
+        barColor: 'from-amber-500 to-orange-400',
+        textColor: 'text-amber-300',
+        badgeBg: 'bg-amber-500/15 border-amber-400/30 text-amber-200',
+      },
+      stone: {
+        label: 'Камни',
+        icon: '🪨',
+        barColor: 'from-sky-400 to-slate-400',
+        textColor: 'text-sky-200',
+        badgeBg: 'bg-sky-400/15 border-sky-300/30 text-sky-200',
+      },
+      shell_lump: {
+        label: 'Ракушки и комки',
+        icon: '🐚',
+        barColor: 'from-yellow-300 to-amber-400',
+        textColor: 'text-yellow-200',
+        badgeBg: 'bg-yellow-400/15 border-yellow-300/35 text-yellow-100',
+      },
+      spark: {
+        label: 'Искры',
+        icon: '✨',
+        barColor: 'from-yellow-200 via-amber-300 to-amber-500',
+        textColor: 'text-amber-200',
+        badgeBg: 'bg-amber-400/20 border-amber-300/50 text-amber-100 shadow-[0_0_12px_rgba(251,191,36,0.22)]',
+      },
+      creature: {
+        label: 'Твари (гады)',
+        icon: '🦀',
+        barColor: 'from-rose-500 to-red-400',
+        textColor: 'text-rose-300',
+        badgeBg: 'bg-rose-500/15 border-rose-400/35 text-rose-200',
+      },
+      empty: {
+        label: 'Пусто',
+        icon: '🫧',
+        barColor: 'from-slate-500 to-slate-400',
+        textColor: 'text-slate-300',
+        badgeBg: 'bg-slate-700/50 border-slate-500/30 text-slate-300',
+      }
+    };
+
+    const SUBTYPES = {
+      cv:         { category: 'heal',       label: 'Целебная водоросль', short: 'ЦВ',         icon: '🌿' },
+      plotka:     { category: 'heal',       label: 'Плотная водоросль',  short: 'Плотка',     icon: '🌱' },
+      moss:       { category: 'heal',       label: 'Мох',                short: 'Мох',        icon: '🍀' },
+      branch:     { category: 'heal',       label: 'Крепкая ветка',      short: 'Ветка',      icon: '🪵' },
+      fish:       { category: 'food',       label: 'Рыба',               short: 'Рыба',       icon: '🐟' },
+      water_moss: { category: 'food',       label: 'Водный мох',         short: 'Водный мох', icon: '🥬' },
+      stone:      { category: 'stone',      label: 'Камень',             short: 'Камень',     icon: '🪨' },
+      shell:      { category: 'shell_lump', label: 'Ракушка',            short: 'Ракушка',    icon: '🐚' },
+      lump:       { category: 'shell_lump', label: 'Комок',              short: 'Комок',      icon: '🧶' },
+      spark:      { category: 'spark',      label: 'Искра',              short: 'Искра',      icon: '✨' },
+      crab:       { category: 'creature',   label: 'Рак',                short: 'Рак',        icon: '🦀' },
+      toad:       { category: 'creature',   label: 'Жаба',               short: 'Жаба',       icon: '🐸' },
+      eel:        { category: 'creature',   label: 'Угорь',              short: 'Угорь',      icon: '⚡' },
+      empty:      { category: 'empty',      label: 'Пусто (без улова)',  short: 'Пусто',      icon: '🫧' }
+    };
+
+    const STORAGE_KEY = 'catwar_dives_tracker_v1';
+
+    /* =========================================================================
+       СОСТОЯНИЕ ПО УМОЛЧАНИЮ И ЗАГРУЗКА/СОХРАНЕНИЕ
+       ========================================================================= */
+    function getDefaultState() {
+      return {
+        sessions: [],
+        shells: [
+          { id: 'sh_1', name: 'Обычная (Мелкая)',    pu: 25, points: 1,   caught: 0, used: 0 },
+          { id: 'sh_2', name: 'Речная',              pu: 35, points: 1.5, caught: 0, used: 0 },
+          { id: 'sh_3', name: 'Перламутровая',       pu: 45, points: 2,   caught: 0, used: 0 },
+          { id: 'sh_4', name: 'Редкая',              pu: 50, points: 3,   caught: 0, used: 0 },
+          { id: 'sh_5', name: 'Королевская (Особая)', pu: 50, points: 5,   caught: 0, used: 0 },
+        ],
+        lumps: {
+          manualOffset: 0,
+          spawnCollected: 0,
+          shellsDropped: 0,
+          fryDropped: 0
+        },
+        settings: {
+          points: {
+            cv: 2,
+            plotka: 2,
+            moss: 1,
+            branch: 1,
+            stone: 1,
+            shell: 2
+          },
+          useShellTablePoints: false,
+          hpLoss: {
+            crab: 5,
+            toad: 10,
+            eel: 15
+          },
+          customRules: [],
+          startingStats: {
+            cv: 0, plotka: 0, moss: 0, branch: 0,
+            fish: 0, water_moss: 0, stone: 0,
+            shell: 0, lump: 0, spark: 0,
+            crab: 0, toad: 0, eel: 0,
+            empty: 0, maxEmptyStreak: 0
+          }
+        }
+      };
+    }
+
+    let state = loadState();
+    let currentTab = 'overview';
+    let previewDives = [];
+    let previewCancelledCount = 0;
+    let journalFilter = 'all';
+    let journalSearchQuery = '';
+    let expandedSessionIds = new Set();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+        const def = getDefaultState();
+        return {
+          sessions: Array.isArray(parsed.sessions) ? parsed.sessions : def.sessions,
+          shells: Array.isArray(parsed.shells) && parsed.shells.length ? parsed.shells : def.shells,
+          lumps: { ...def.lumps, ...(parsed.lumps || {}) },
+          settings: {
+            points: { ...def.settings.points, ...(parsed.settings?.points || {}) },
+            useShellTablePoints: Boolean(parsed.settings?.useShellTablePoints),
+            hpLoss: { ...def.settings.hpLoss, ...(parsed.settings?.hpLoss || {}) },
+            customRules: Array.isArray(parsed.settings?.customRules) ? parsed.settings.customRules : [],
+            startingStats: { ...def.settings.startingStats, ...(parsed.settings?.startingStats || {}) }
+          }
+        };
+      } catch (e) {
+        console.error('Ошибка чтения localStorage:', e);
+        return getDefaultState();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error('Ошибка сохранения в localStorage:', e);
+        showToast('Не удалось сохранить данные в браузере (переполнен localStorage)', 'error');
+      }
+    }
+
+    /* =========================================================================
+       УТИЛИТЫ: ЭКРАНИРОВАНИЕ, УВЕДОМЛЕНИЯ, МОДАЛКИ
+       ========================================================================= */
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function uid(prefix = 'id') {
+      return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+    }
+
+    function formatNum(n) {
+      const num = Number(n) || 0;
+      return Number.isInteger(num) ? num.toLocaleString('ru-RU') : Number(num.toFixed(2)).toLocaleString('ru-RU');
+    }
+
+    function formatPct(part, total) {
+      if (!total) return '0%';
+      const pct = (part / total) * 100;
+      return (pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)) + '%';
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const colors = {
+        success: 'bg-emerald-950/90 border-emerald-400/40 text-emerald-100',
+        info:    'bg-lake-800/95 border-cyan-400/40 text-cyan-100',
+        error:   'bg-rose-950/95 border-rose-400/40 text-rose-100'
+      };
+      const icons = { success: '✅', info: 'ℹ️', error: '⚠️' };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto px-4 py-3 rounded-2xl border backdrop-blur-md shadow-xl text-sm font-medium flex items-center gap-2.5 transition-all duration-300 ${colors[type] || colors.info}`;
+      el.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span class="flex-1">${escapeHtml(message)}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateX(16px)';
+        setTimeout(() => el.remove(), 300);
+      }, 3200);
+    }
+
+    // Кастомное окно подтверждения вместо confirm()
+    let confirmCallback = null;
+    function openConfirmModal({ title, message, okText = 'Подтвердить', danger = true, onConfirm }) {
+      const modal = document.getElementById('confirm-modal');
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+      const okBtn = document.getElementById('confirm-ok-btn');
+      okBtn.textContent = okText;
+      okBtn.className = danger
+        ? 'px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold transition shadow-lg shadow-rose-950/50'
+        : 'px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-lake-950 text-sm font-bold transition';
+      confirmCallback = onConfirm;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirm-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      confirmCallback = null;
+    }
+
+    document.getElementById('confirm-cancel-btn').addEventListener('click', closeConfirmModal);
+    document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+      const cb = confirmCallback;
+      closeConfirmModal();
+      if (typeof cb === 'function') cb();
+    });
+    document.getElementById('confirm-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'confirm-modal') closeConfirmModal();
+    });
+
+    /* =========================================================================
+       УМНЫЙ ПАРСЕР ИСТОРИИ CATWAR
+       ========================================================================= */
+    // Паттерны посторонних действий, которые нужно вычищать из лога
+    const IGNORED_ACTION_PATTERNS = [
+      /поплавал[а]?\.?/gi,
+      /отменил[а]?\s+действие\.?/gi,
+      /поднял[а]?\s+предмет[^.\n]*\.?/gi,
+      /опустил[а]?\s+предмет[^.\n]*\.?/gi,
+      /поднял[а]?\s+игрока[^.\n]*\.?/gi,
+      /опустил[а]?\s+игрока[^.\n]*\.?/gi,
+      /смешал[а]?[^.\n]*\.?/gi,
+      /зевнул[а]?\.?/gi,
+      /встал[а]?\s+в\s+боевой\s+режим\.?/gi,
+      /закончил[а]?\s+бой\.?/gi,
+      /(?:пош[ёе]л|пошла)\s+в\s+локацию[^.\n]*\.?/gi,
+      /[^.\n]*поднял[а]?\s+меня\.?/gi,
+      /[^.\n]*был[а]?\s+опущен[а]?[^.\n]*\.?/gi
+    ];
+
+    // Явные пустые фразы (проверяются ДО ключевых слов ресурсов/тварей, чтобы избежать ложных срабатываний)
+    const EXPLICIT_EMPTY_PATTERNS = [
+      /не\s+наш[ёе]л[а]?\s+ничего\s+интересного/i,
+      /ничего\s+интересного/i,
+      /смотрю\s+на\s+камень/i,
+      /камень\s+смотрит\s+на\s+меня/i,
+      /хотел[а]?\s+поймать\s+лягушку/i,
+      /скрылась\s+в\s+водорослях/i,
+      /течение\s+вынудило/i,
+      /вынырнуть\s+ни\s+с\s+чем/i,
+      /засмотрел(?:ась|ся)\s+на\s+красивую\s+ракушку/i,
+      /забыл[а]?,?\s*зачем\s+нырял/i,
+      /почти\s+достал[а]?\s+со\s+дна\s+красивую\s+ракушку/i,
+      /выскользнула\s+из\s+лап/i,
+      /увидел[а]?\s+огромного\s+сома/i,
+      /испугал(?:ась|ся)/i,
+      /погнал(?:ась|ся)\s+за\s+косяком\s+мальков/i,
+      /слишком\s+шустрыми/i,
+      /рак\s+заметил\s+меня/i,
+      /угрожающе\s+клацнул\s+клешн/i
+    ];
+
+    function classifyDiveText(cleanedText) {
+      const lower = cleanedText.toLowerCase();
+
+      // 0. Пользовательские правила (высший приоритет)
+      for (const rule of state.settings.customRules) {
+        if (rule.phrase && lower.includes(rule.phrase.toLowerCase())) {
+          const st = SUBTYPES[rule.subtype] ? rule.subtype : 'empty';
+          return { subtype: st, category: SUBTYPES[st].category, uncertain: false };
+        }
+      }
+
+      // Если после очистки текст пустой
+      if (!lower.trim()) {
+        return { subtype: 'empty', category: 'empty', uncertain: false };
+      }
+
+      // 1. Явные пустые фразы (защита от ложных срабатываний)
+      for (const rx of EXPLICIT_EMPTY_PATTERNS) {
+        if (rx.test(lower)) {
+          return { subtype: 'empty', category: 'empty', uncertain: false };
+        }
+      }
+
+      // 1б. Искры (редкая дополнительная валюта)
+      if (/искр[уаыеой]|искр(?=$|[^а-яё])/i.test(lower)) {
+        return { subtype: 'spark', category: 'spark', uncertain: false };
+      }
+
+      // 2. Твари (гады)
+      if (/живого\s+рака|цапнул\s+меня\s+за\s+нос|ущипнул.*рак|рак.*цапнул|обнаружил[а]?.*рака/i.test(lower)) {
+        return { subtype: 'crab', category: 'creature', uncertain: false };
+      }
+      if (/(?:^|[^а-яё])жаб[ауыеой]/i.test(lower)) {
+        return { subtype: 'toad', category: 'creature', uncertain: false };
+      }
+      if (/(?:^|[^а-яё])уг(?:ор[ья]|р[яюеё])/i.test(lower)) {
+        return { subtype: 'eel', category: 'creature', uncertain: false };
+      }
+
+      // 3. Ракушки и комки
+      if (/комок|комк[ауио]/i.test(lower)) {
+        return { subtype: 'lump', category: 'shell_lump', uncertain: false };
+      }
+      if (/ракушк/i.test(lower)) {
+        return { subtype: 'shell', category: 'shell_lump', uncertain: false };
+      }
+
+      // 4. Хилресы (кроме обычного мха, который проверяем ПОСЛЕ водного мха)
+      if (/целебн[а-яё]*\s+водоросл/i.test(lower)) {
+        return { subtype: 'cv', category: 'heal', uncertain: false };
+      }
+      if (/плотн[а-яё]*\s+водоросл/i.test(lower)) {
+        return { subtype: 'plotka', category: 'heal', uncertain: false };
+      }
+      if (/крепк[а-яё]*\s+ветк|(?:^|[^а-яё])ветк[уаи]/i.test(lower)) {
+        return { subtype: 'branch', category: 'heal', uncertain: false };
+      }
+
+      // 5. Еда: Водный мох (СТРОГО до обычного мха!)
+      if (/водн[а-яё]*\s+мох|водного\s+мха/i.test(lower)) {
+        return { subtype: 'water_moss', category: 'food', uncertain: false };
+      }
+
+      // 4б. Обычный мох (хилрес)
+      if (/(?:^|[^а-яё])мох(?:$|[^а-яё])|(?:^|[^а-яё])мха(?:$|[^а-яё])/i.test(lower)) {
+        return { subtype: 'moss', category: 'heal', uncertain: false };
+      }
+
+      // 5б. Еда: Рыба
+      if (/белого\s+амура|белый\s+амур|сазан|карас|карп|окун|щук|плотв|форел|ерш|ёрш|пескар|лещ|рыб[уаы]|мальк[аоу]/i.test(lower)) {
+        return { subtype: 'fish', category: 'food', uncertain: false };
+      }
+
+      // 6. Камни
+      if (/камен|камн|гальк|камеш/i.test(lower)) {
+        return { subtype: 'stone', category: 'stone', uncertain: false };
+      }
+
+      // Неизвестная фраза — считаем пустым, но помечаем флагом uncertain для ручной проверки
+      return { subtype: 'empty', category: 'empty', uncertain: true };
+    }
+
+    function parseCatWarLog(rawText) {
+      if (!rawText || !rawText.trim()) {
+        return { dives: [], cancelledCount: 0 };
+      }
+
+      // Нормализуем переносы строк и лишние пробелы
+      const normalized = rawText.replace(/\r\n?/g, '\n');
+
+      // Разбиваем по вхождениям «Нырнул» / «Нырнула» (с точкой или без, без учёта регистра)
+      const chunks = normalized.split(/(?=(?:^|[\s\n.!?;:—-])нырнул[а]?(?:[\s\n.!?,;:]|$))/i);
+
+      const dives = [];
+      let cancelledCount = 0;
+
+      for (let chunk of chunks) {
+        // Ищем начало маркера нырка в куске
+        const match = chunk.match(/нырнул[а]?\.?/i);
+        if (!match) continue;
+
+        // Берём текст строго после «Нырнул(а).»
+        let body = chunk.slice(match.index + match[0].length);
+        const hadCancel = /отменил[а]?\s+действие/i.test(body);
+
+        // Вычищаем посторонние действия
+        for (const rx of IGNORED_ACTION_PATTERNS) {
+          body = body.replace(rx, ' ');
+        }
+
+        // Убираем лишние пробелы, переносы и пустые точки
+        body = body
+          .replace(/\s+/g, ' ')
+          .replace(/^[\s.,;:!?—-]+/, '')
+          .trim();
+
+        // Если нырок был отменён и больше ничего не произошло — пропускаем его
+        if (hadCancel && !body) {
+          cancelledCount++;
+          continue;
+        }
+
+        const classified = classifyDiveText(body);
+        dives.push({
+          id: uid('d'),
+          text: body || 'Без описания (пусто)',
+          subtype: classified.subtype,
+          category: classified.category,
+          uncertain: classified.uncertain
+        });
+      }
+
+      return { dives, cancelledCount };
+    }
+
+    /* =========================================================================
+       РАСЧЁТ АГРЕГИРОВАННОЙ СТАТИСТИКИ
+       ========================================================================= */
+    function computeStats() {
+      const counts = {};
+      for (const key of Object.keys(SUBTYPES)) {
+        counts[key] = Number(state.settings.startingStats[key]) || 0;
+      }
+
+      // Счётчики только из истории нырков (для сверки ракушек и комков)
+      let historyShells = Number(state.settings.startingStats.shell) || 0;
+      let historyLumps = Number(state.settings.startingStats.lump) || 0;
+
+      // Серии пустых подряд (идём от старых сессий к новым)
+      let currentEmptyStreak = 0;
+      let maxEmptyStreak = Number(state.settings.startingStats.maxEmptyStreak) || 0;
+
+      const chronoSessions = [...state.sessions].sort((a, b) => a.timestamp - b.timestamp);
+      for (const session of chronoSessions) {
+        for (const dive of session.dives) {
+          const st = SUBTYPES[dive.subtype] ? dive.subtype : 'empty';
+          counts[st] = (counts[st] || 0) + 1;
+
+          if (st === 'shell') historyShells++;
+          if (st === 'lump') historyLumps++;
+
+          if (st === 'empty') {
+            currentEmptyStreak++;
+            if (currentEmptyStreak > maxEmptyStreak) maxEmptyStreak = currentEmptyStreak;
+          } else {
+            currentEmptyStreak = 0;
+          }
+        }
+      }
+
+      const healTotal = counts.cv + counts.plotka + counts.moss + counts.branch;
+      const foodTotal = counts.fish + counts.water_moss;
+      const stoneTotal = counts.stone;
+      const shellLumpTotal = counts.shell + counts.lump;
+      const sparkTotal = counts.spark;
+      const creatureTotal = counts.crab + counts.toad + counts.eel;
+      const emptyTotal = counts.empty;
+
+      const catchTotal = healTotal + foodTotal + stoneTotal + shellLumpTotal + sparkTotal + creatureTotal;
+      const totalDives = catchTotal + emptyTotal;
+
+      // Потеря здоровья
+      const hpCrab = counts.crab * (Number(state.settings.hpLoss.crab) || 0);
+      const hpToad = counts.toad * (Number(state.settings.hpLoss.toad) || 0);
+      const hpEel  = counts.eel  * (Number(state.settings.hpLoss.eel)  || 0);
+      const hpTotal = hpCrab + hpToad + hpEel;
+
+      // Ракушки из таблицы видов
+      let shellsDistributed = 0;
+      let shellsInStock = 0;
+      let shellsPilePU = 0;
+      let shellsAllPU = 0;
+      let shellsTablePoints = 0;
+
+      for (const sh of state.shells) {
+        const caught = Math.max(0, Number(sh.caught) || 0);
+        const used = Math.max(0, Number(sh.used) || 0);
+        const inStock = Math.max(0, caught - used);
+        const pu = Number(sh.pu) || 0;
+        const pts = Number(sh.points) || 0;
+
+        shellsDistributed += caught;
+        shellsInStock += inStock;
+        shellsPilePU += inStock * pu;
+        shellsAllPU += caught * pu;
+        shellsTablePoints += caught * pts;
+      }
+
+      // Баллы
+      const p = state.settings.points;
+      const ptsResources =
+        counts.cv     * (Number(p.cv) || 0) +
+        counts.plotka * (Number(p.plotka) || 0) +
+        counts.moss   * (Number(p.moss) || 0) +
+        counts.branch * (Number(p.branch) || 0) +
+        counts.stone  * (Number(p.stone) || 0);
+
+      let ptsShells = 0;
+      if (state.settings.useShellTablePoints) {
+        const undistributed = Math.max(0, counts.shell - shellsDistributed);
+        ptsShells = shellsTablePoints + undistributed * (Number(p.shell) || 0);
+      } else {
+        ptsShells = counts.shell * (Number(p.shell) || 0);
+      }
+      const ptsTotal = ptsResources + ptsShells;
+
+      return {
+        counts,
+        healTotal, foodTotal, stoneTotal, shellLumpTotal, sparkTotal, creatureTotal, emptyTotal,
+        catchTotal, totalDives,
+        currentEmptyStreak, maxEmptyStreak,
+        hpCrab, hpToad, hpEel, hpTotal,
+        historyShells, historyLumps,
+        shellsDistributed, shellsInStock, shellsPilePU, shellsAllPU, shellsTablePoints,
+        ptsResources, ptsShells, ptsTotal
+      };
+    }
+
+    /* =========================================================================
+       РЕНДЕРИНГ ИНТЕРФЕЙСА
+       ========================================================================= */
+    function renderAll() {
+      const stats = computeStats();
+      renderHeader(stats);
+      renderOverview(stats);
+      renderShellsAndLumps(stats);
+      renderSettings();
+      renderJournal();
+    }
+
+    function renderHeader(stats) {
+      document.getElementById('header-total-mobile').textContent = formatNum(stats.totalDives);
+      document.getElementById('journal-count-badge').textContent = state.sessions.length;
+    }
+
+    function renderOverview(stats) {
+      // KPI
+      document.getElementById('kpi-total').textContent = formatNum(stats.totalDives);
+      document.getElementById('kpi-sessions-sub').textContent = `${state.sessions.length} сессий в журнале`;
+      document.getElementById('kpi-catch').textContent = formatNum(stats.catchTotal);
+      document.getElementById('kpi-catch-pct').textContent = formatPct(stats.catchTotal, stats.totalDives);
+      document.getElementById('kpi-empty').textContent = formatNum(stats.emptyTotal);
+      document.getElementById('kpi-empty-pct').textContent = formatPct(stats.emptyTotal, stats.totalDives);
+      document.getElementById('kpi-streak-cur').textContent = formatNum(stats.currentEmptyStreak);
+      document.getElementById('kpi-streak-max').textContent = formatNum(stats.maxEmptyStreak);
+      document.getElementById('kpi-sparks').textContent = formatNum(stats.sparkTotal);
+      document.getElementById('kpi-sparks-pct').textContent = formatPct(stats.sparkTotal, stats.totalDives);
+
+      // Ресурсы и улов
+      const groups = [
+        {
+          key: 'heal',
+          total: stats.healTotal,
+          subs: ['cv', 'plotka', 'moss', 'branch']
+        },
+        {
+          key: 'food',
+          total: stats.foodTotal,
+          subs: ['fish', 'water_moss']
+        },
+        {
+          key: 'stone',
+          total: stats.stoneTotal,
+          subs: ['stone']
+        },
+        {
+          key: 'shell_lump',
+          total: stats.shellLumpTotal,
+          subs: ['shell', 'lump']
+        },
+        {
+          key: 'spark',
+          total: stats.sparkTotal,
+          subs: ['spark']
+        },
+        {
+          key: 'creature',
+          total: stats.creatureTotal,
+          subs: ['crab', 'toad', 'eel']
+        }
+      ];
+
+      const resEl = document.getElementById('resources-breakdown');
+      resEl.innerHTML = groups.map(g => {
+        const cat = CATEGORIES[g.key];
+        const pctNum = stats.totalDives ? (g.total / stats.totalDives) * 100 : 0;
+        const subChips = g.subs.map(stKey => {
+          const st = SUBTYPES[stKey];
+          const val = stats.counts[stKey] || 0;
+          return `
+            <div class="px-2.5 py-1.5 rounded-xl bg-lake-950/65 border border-slate-700/40 flex items-center gap-1.5 text-xs">
+              <span>${st.icon}</span>
+              <span class="text-slate-300">${st.label}:</span>
+              <strong class="text-slate-100 font-bold">${formatNum(val)}</strong>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-lake-950/45 border border-slate-700/35">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div class="flex items-center gap-2 font-bold text-sm sm:text-base ${cat.textColor}">
+                <span>${cat.icon}</span>
+                <span>${cat.label}</span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span class="text-base sm:text-lg font-extrabold text-slate-100">${formatNum(g.total)}</span>
+                <span class="text-xs font-semibold text-slate-400">${formatPct(g.total, stats.totalDives)}</span>
+              </div>
+            </div>
+            <div class="w-full h-2.5 rounded-full bg-slate-800/90 overflow-hidden mb-3">
+              <div class="h-full rounded-full bg-gradient-to-r ${cat.barColor} transition-all duration-500" style="width: ${Math.min(100, pctNum).toFixed(1)}%"></div>
+            </div>
+            <div class="flex flex-wrap gap-2">${subChips}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Потерянное здоровье
+      const hpRows = [
+        { icon: '🦀', label: 'Рак',   count: stats.counts.crab, dmg: state.settings.hpLoss.crab, total: stats.hpCrab },
+        { icon: '🐸', label: 'Жаба',  count: stats.counts.toad, dmg: state.settings.hpLoss.toad, total: stats.hpToad },
+        { icon: '⚡', label: 'Угорь', count: stats.counts.eel,  dmg: state.settings.hpLoss.eel,  total: stats.hpEel  }
+      ];
+      document.getElementById('hp-loss-list').innerHTML = hpRows.map(r => `
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-lake-950/60 border border-rose-500/10 text-sm">
+          <div class="flex items-center gap-2">
+            <span>${r.icon}</span>
+            <span class="text-slate-200 font-medium">${r.label}</span>
+            <span class="text-xs text-slate-400">(${formatNum(r.count)} × −${formatNum(r.dmg)}%)</span>
+          </div>
+          <span class="font-bold ${r.total > 0 ? 'text-rose-300' : 'text-slate-500'}">−${formatNum(r.total)}%</span>
+        </div>
+      `).join('');
+      document.getElementById('hp-loss-total').textContent = stats.hpTotal > 0 ? `−${formatNum(stats.hpTotal)}%` : '0%';
+
+      // Баллы
+      const shellModeHint = state.settings.useShellTablePoints ? 'по таблице видов' : `по ${formatNum(state.settings.points.shell)} б./шт.`;
+      document.getElementById('points-breakdown-list').innerHTML = `
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-lake-950/60 border border-amber-400/10 text-sm">
+          <div>
+            <div class="text-slate-200 font-medium">🐚 Баллы за ракушки</div>
+            <div class="text-[11px] text-slate-400">${formatNum(stats.counts.shell)} шт. (${shellModeHint})</div>
+          </div>
+          <span class="font-bold text-amber-200 text-base">${formatNum(stats.ptsShells)}</span>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-lake-950/60 border border-emerald-400/10 text-sm">
+          <div>
+            <div class="text-slate-200 font-medium">🌿 Баллы за ресурсы (хилресы + камни)</div>
+            <div class="text-[11px] text-slate-400">ЦВ: ${stats.counts.cv}, Плотка: ${stats.counts.plotka}, Мох: ${stats.counts.moss}, Ветка: ${stats.counts.branch}, Камни: ${stats.counts.stone}</div>
+          </div>
+          <span class="font-bold text-emerald-300 text-base">${formatNum(stats.ptsResources)}</span>
+        </div>
+      `;
+      document.getElementById('points-total').textContent = formatNum(stats.ptsTotal);
+    }
+
+    /* =========================================================================
+       РЕНДЕРИНГ ВКЛАДКИ «РАКУШКИ И КОМКИ»
+       ========================================================================= */
+    function renderShellsAndLumps(stats) {
+      // Сверка ракушек
+      document.getElementById('shells-from-history').textContent = formatNum(stats.historyShells);
+      document.getElementById('shells-distributed').textContent = formatNum(stats.shellsDistributed);
+
+      const syncEl = document.getElementById('shells-sync-status');
+      const diff = stats.historyShells - stats.shellsDistributed;
+      if (diff === 0) {
+        syncEl.textContent = '✓ Всё сходится';
+        syncEl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-400/25';
+      } else if (diff > 0) {
+        syncEl.textContent = `Осталось распределить: ${formatNum(diff)} шт.`;
+        syncEl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-200 border border-amber-400/25';
+      } else {
+        syncEl.textContent = `В таблице на ${formatNum(Math.abs(diff))} шт. больше (из комков/подарков)`;
+        syncEl.className = 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-cyan-500/15 text-cyan-200 border border-cyan-400/25';
+      }
+
+      document.getElementById('shells-total-instock').textContent = `${formatNum(stats.shellsInStock)} шт.`;
+      document.getElementById('shells-total-pile-pu').textContent = `+${formatNum(stats.shellsPilePU)} ПУ`;
+      document.getElementById('shells-total-all-pu').textContent = `+${formatNum(stats.shellsAllPU)} ПУ`;
+
+      // Таблица видов ракушек
+      const tbody = document.getElementById('shells-table-body');
+      tbody.innerHTML = state.shells.map(sh => {
+        const caught = Math.max(0, Number(sh.caught) || 0);
+        const used = Math.max(0, Number(sh.used) || 0);
+        const inStock = Math.max(0, caught - used);
+        const pilePU = inStock * (Number(sh.pu) || 0);
+        const allPU = caught * (Number(sh.pu) || 0);
+
+        return `
+          <tr class="hover:bg-lake-800/35 transition">
+            <td class="py-2.5 pr-3">
+              <input type="text" value="${escapeHtml(sh.name)}" onchange="updateShellField('${sh.id}', 'name', this.value)"
+                class="w-full min-w-[140px] px-2.5 py-1.5 rounded-lg bg-lake-950/70 border border-slate-700/70 focus:border-amber-300/60 outline-none text-slate-100 text-sm font-medium" />
+            </td>
+            <td class="py-2.5 px-2">
+              <input type="number" step="1" min="0" value="${sh.pu}" onchange="updateShellField('${sh.id}', 'pu', this.value)"
+                class="w-20 mx-auto block px-2 py-1.5 rounded-lg bg-lake-950/70 border border-slate-700/70 focus:border-amber-300/60 outline-none text-center text-amber-200 font-semibold text-sm" />
+            </td>
+            <td class="py-2.5 px-2">
+              <input type="number" step="0.5" min="0" value="${sh.points}" onchange="updateShellField('${sh.id}', 'points', this.value)"
+                class="w-20 mx-auto block px-2 py-1.5 rounded-lg bg-lake-950/70 border border-slate-700/70 focus:border-cyan-300/60 outline-none text-center text-cyan-200 font-semibold text-sm" />
+            </td>
+            <td class="py-2.5 px-2">
+              <div class="flex items-center justify-center gap-1">
+                <button type="button" onclick="stepShellField('${sh.id}', 'caught', -1)" class="w-7 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">−</button>
+                <input type="number" min="0" value="${caught}" onchange="updateShellField('${sh.id}', 'caught', this.value)"
+                  class="w-14 h-8 rounded-lg bg-lake-950 border border-slate-700 text-center text-slate-100 font-bold text-sm" />
+                <button type="button" onclick="stepShellField('${sh.id}', 'caught', 1)" class="w-7 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">+</button>
+              </div>
+            </td>
+            <td class="py-2.5 px-2">
+              <div class="flex items-center justify-center gap-1">
+                <button type="button" onclick="stepShellField('${sh.id}', 'used', -1)" class="w-7 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">−</button>
+                <input type="number" min="0" value="${used}" onchange="updateShellField('${sh.id}', 'used', this.value)"
+                  class="w-14 h-8 rounded-lg bg-lake-950 border border-slate-700 text-center text-slate-300 font-semibold text-sm" />
+                <button type="button" onclick="stepShellField('${sh.id}', 'used', 1)" class="w-7 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">+</button>
+              </div>
+            </td>
+            <td class="py-2.5 px-2 text-right font-bold text-slate-100">${formatNum(inStock)}</td>
+            <td class="py-2.5 px-2 text-right font-bold text-amber-300">+${formatNum(pilePU)}</td>
+            <td class="py-2.5 pl-2 text-right font-semibold text-cyan-300">+${formatNum(allPU)}</td>
+            <td class="py-2.5 pl-2 text-right">
+              ${state.shells.length > 1 ? `<button type="button" onclick="deleteShellType('${sh.id}')" title="Удалить вид" class="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-500 hover:text-rose-300 transition">✕</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Трекер комков
+      const caughtLumpsTotal = Math.max(0, stats.historyLumps + (Number(state.lumps.manualOffset) || 0));
+      const spawn = Math.max(0, Number(state.lumps.spawnCollected) || 0);
+      const grandTotalLumps = caughtLumpsTotal + spawn;
+      const shDrop = Math.max(0, Number(state.lumps.shellsDropped) || 0);
+      const fryDrop = Math.max(0, Number(state.lumps.fryDropped) || 0);
+      const opened = shDrop + fryDrop;
+      const luckPct = opened > 0 ? (shDrop / opened) * 100 : 0;
+
+      document.getElementById('lumps-caught-total').textContent = formatNum(caughtLumpsTotal);
+      document.getElementById('lumps-from-history').textContent = formatNum(stats.historyLumps);
+      document.getElementById('lump-manual-offset').value = state.lumps.manualOffset;
+      document.getElementById('lump-spawn').value = spawn;
+      document.getElementById('lumps-grand-total').textContent = formatNum(grandTotalLumps);
+      document.getElementById('lump-shells').value = shDrop;
+      document.getElementById('lump-fry').value = fryDrop;
+
+      document.getElementById('lump-luck-pct').textContent = opened > 0 ? `${luckPct.toFixed(1)}%` : '0%';
+      document.getElementById('lump-opened-count').textContent = `(${formatNum(opened)} открыто)`;
+      document.getElementById('lump-luck-bar').style.width = `${Math.min(100, luckPct).toFixed(1)}%`;
+
+      const luckLabel = document.getElementById('lump-luck-label');
+      if (opened === 0) {
+        luckLabel.textContent = 'Нет открытых комков';
+        luckLabel.className = 'text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400';
+      } else if (luckPct >= 65) {
+        luckLabel.textContent = '✨ Озёрное благословение!';
+        luckLabel.className = 'text-xs px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-300/30';
+      } else if (luckPct >= 45) {
+        luckLabel.textContent = '🐚 Хорошая удача';
+        luckLabel.className = 'text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30';
+      } else {
+        luckLabel.textContent = '🐟 Мальки тебя обожают';
+        luckLabel.className = 'text-xs px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-200 border border-orange-400/30';
+      }
+    }
+
+    /* =========================================================================
+       РЕНДЕРИНГ ВКЛАДКИ «БАЛЛЫ И НАСТРОЙКИ»
+       ========================================================================= */
+    function renderSettings() {
+      // Баллы
+      const pointItems = [
+        { key: 'cv',     icon: '🌿', label: 'Целебная водоросль (ЦВ)' },
+        { key: 'plotka', icon: '🌱', label: 'Плотная водоросль (Плотка)' },
+        { key: 'moss',   icon: '🍀', label: 'Мох' },
+        { key: 'branch', icon: '🪵', label: 'Крепкая ветка' },
+        { key: 'stone',  icon: '🪨', label: 'Камень' },
+        { key: 'shell',  icon: '🐚', label: 'Ракушка (базовая ставка)' }
+      ];
+      document.getElementById('settings-points-form').innerHTML = pointItems.map(item => `
+        <div class="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-lake-950/60 border border-slate-700/40">
+          <span class="text-sm text-slate-200 flex items-center gap-2"><span>${item.icon}</span>${item.label}</span>
+          <input type="number" step="0.5" min="0" value="${state.settings.points[item.key]}"
+            onchange="updatePointSetting('${item.key}', this.value)"
+            class="w-24 px-3 py-1.5 rounded-lg bg-lake-900 border border-amber-300/25 focus:border-amber-300/70 outline-none text-right font-bold text-amber-200 text-sm" />
+        </div>
+      `).join('');
+      document.getElementById('setting-use-shell-table-pts').checked = state.settings.useShellTablePoints;
+
+      // Потеря здоровья
+      const hpItems = [
+        { key: 'crab', icon: '🦀', label: 'Рак (урон в % HP)' },
+        { key: 'toad', icon: '🐸', label: 'Жаба (урон в % HP)' },
+        { key: 'eel',  icon: '⚡', label: 'Угорь (урон в % HP)' }
+      ];
+      document.getElementById('settings-hp-form').innerHTML = hpItems.map(item => `
+        <div class="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-lake-950/60 border border-rose-500/15">
+          <span class="text-sm text-slate-200 flex items-center gap-2"><span>${item.icon}</span>${item.label}</span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-rose-400 font-bold">−</span>
+            <input type="number" step="1" min="0" max="100" value="${state.settings.hpLoss[item.key]}"
+              onchange="updateHpSetting('${item.key}', this.value)"
+              class="w-20 px-3 py-1.5 rounded-lg bg-lake-900 border border-rose-400/25 focus:border-rose-400/70 outline-none text-right font-bold text-rose-300 text-sm" />
+            <span class="text-slate-400 text-xs">%</span>
+          </div>
+        </div>
+      `).join('');
+
+      // Выпадающий список подтипов для пользовательских правил
+      const sel = document.getElementById('custom-rule-subtype');
+      if (!sel.options.length) {
+        sel.innerHTML = Object.entries(SUBTYPES).map(([k, v]) =>
+          `<option value="${k}">${v.icon} ${v.label}</option>`
+        ).join('');
+      }
+
+      // Список пользовательских правил
+      const rulesBox = document.getElementById('custom-rules-list');
+      if (!state.settings.customRules.length) {
+        rulesBox.innerHTML = `<div class="text-xs text-slate-500 italic p-3 rounded-xl bg-lake-950/40 border border-slate-800">Пока нет пользовательских правил. Стандартный парсер уже знает все основные фразы Озёрной Вселенной.</div>`;
+      } else {
+        rulesBox.innerHTML = state.settings.customRules.map(r => {
+          const st = SUBTYPES[r.subtype] || SUBTYPES.empty;
+          const cat = CATEGORIES[st.category];
+          return `
+            <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-lake-950/65 border border-slate-700/45 text-sm">
+              <div class="flex flex-wrap items-center gap-2 min-w-0">
+                <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-cyan-200 font-mono text-xs break-all">«${escapeHtml(r.phrase)}»</span>
+                <span class="text-slate-500">→</span>
+                <span class="px-2.5 py-1 rounded-lg border text-xs font-semibold ${cat.badgeBg}">${st.icon} ${st.label}</span>
+              </div>
+              <button type="button" onclick="deleteCustomRule('${r.id}')" class="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition shrink-0">✕</button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Стартовые значения (перенос из таблицы)
+      const startKeys = [
+        ...Object.entries(SUBTYPES).map(([k, v]) => ({ key: k, label: `${v.icon} ${v.label}` })),
+        { key: 'maxEmptyStreak', label: '❄️ Антирекорд пустых подряд' }
+      ];
+      document.getElementById('starting-stats-grid').innerHTML = startKeys.map(item => `
+        <div class="p-2.5 rounded-xl bg-lake-950/60 border border-slate-700/40">
+          <label class="block text-[11px] text-slate-400 truncate mb-1" title="${item.label}">${item.label}</label>
+          <input type="number" min="0" value="${state.settings.startingStats[item.key] || 0}"
+            onchange="updateStartingStat('${item.key}', this.value)"
+            class="w-full px-2.5 py-1.5 rounded-lg bg-lake-900 border border-slate-700 focus:border-cyan-400/60 outline-none text-sm font-bold text-slate-100" />
+        </div>
+      `).join('');
+    }
+
+    /* =========================================================================
+       РЕНДЕРИНГ ВКЛАДКИ «ЖУРНАЛ НЫРКОВ»
+       ========================================================================= */
+    function renderJournal() {
+      // Фильтр-пилюли
+      const filters = [
+        { key: 'all', label: 'Все сессии', icon: '📋' },
+        ...Object.entries(CATEGORIES).map(([k, v]) => ({ key: k, label: v.label, icon: v.icon }))
+      ];
+      document.getElementById('journal-filter-pills').innerHTML = filters.map(f => {
+        const active = journalFilter === f.key;
+        return `
+          <button type="button" onclick="setJournalFilter('${f.key}')"
+            class="px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+              active
+                ? 'bg-cyan-500/25 border-cyan-400/50 text-cyan-100'
+                : 'bg-lake-950/60 border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }">
+            ${f.icon} ${f.label}
+          </button>
+        `;
+      }).join('');
+
+      const listEl = document.getElementById('journal-list');
+      const q = journalSearchQuery.trim().toLowerCase();
+
+      // Сортируем от новых к старым и фильтруем
+      const filtered = [...state.sessions]
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .filter(s => {
+          if (journalFilter !== 'all') {
+            const hasCat = s.dives.some(d => (SUBTYPES[d.subtype]?.category || 'empty') === journalFilter);
+            if (!hasCat) return false;
+          }
+          if (q) {
+            const inRaw = (s.rawText || '').toLowerCase().includes(q);
+            const inDives = s.dives.some(d =>
+              (d.text || '').toLowerCase().includes(q) ||
+              (SUBTYPES[d.subtype]?.label || '').toLowerCase().includes(q)
+            );
+            if (!inRaw && !inDives) return false;
+          }
+          return true;
+        });
+
+      if (!filtered.length) {
+        listEl.innerHTML = `
+          <div class="glass-card rounded-2xl p-10 text-center">
+            <div class="text-4xl mb-2">🌊</div>
+            <div class="text-base font-bold text-slate-200">${state.sessions.length ? 'Ничего не найдено по фильтру' : 'Журнал нырков пока пуст'}</div>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+              ${state.sessions.length ? 'Попробуйте очистить строку поиска или выбрать другую категорию.' : 'Перейдите во вкладку «Обзор и ввод» и вставьте историю нырков из CatWar.'}
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(session => {
+        const dt = new Date(session.timestamp);
+        const dateStr = dt.toLocaleString('ru-RU', {
+          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        // Группируем улов сессии для кратких бейджей
+        const subCounts = {};
+        for (const d of session.dives) {
+          subCounts[d.subtype] = (subCounts[d.subtype] || 0) + 1;
+        }
+        const badges = Object.entries(subCounts).map(([stKey, cnt]) => {
+          const st = SUBTYPES[stKey] || SUBTYPES.empty;
+          const cat = CATEGORIES[st.category];
+          return `<span class="px-2 py-0.5 rounded-lg border text-xs font-medium ${cat.badgeBg}">${st.icon} ${st.short}: ${cnt}</span>`;
+        }).join('');
+
+        const isExpanded = expandedSessionIds.has(session.id);
+
+        return `
+          <div class="glass-card rounded-2xl p-4 sm:p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="px-2.5 py-1 rounded-xl bg-cyan-500/15 border border-cyan-400/25 text-cyan-200 text-xs font-bold">
+                  ${session.dives.length} ныр.
+                </span>
+                <span class="text-xs sm:text-sm text-slate-300 font-medium">${dateStr}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="toggleSessionExpand('${session.id}')" class="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-medium transition">
+                  ${isExpanded ? 'Скрыть детали ▲' : 'Показать лог ▼'}
+                </button>
+                <button type="button" onclick="confirmDeleteSession('${session.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/25 border border-rose-400/25 text-rose-300 text-xs font-medium transition">
+                  Удалить
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-3 flex flex-wrap gap-1.5">${badges}</div>
+
+            ${isExpanded ? `
+              <div class="mt-4 pt-4 border-t border-slate-700/50 space-y-3">
+                <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Разобранные нырки (${session.dives.length}):</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-60 overflow-y-auto pr-1">
+                  ${session.dives.map((d, idx) => {
+                    const st = SUBTYPES[d.subtype] || SUBTYPES.empty;
+                    const cat = CATEGORIES[st.category];
+                    return `
+                      <div class="p-2 rounded-xl bg-lake-950/70 border border-slate-800 flex items-start gap-2 text-xs">
+                        <span class="text-slate-500 font-mono shrink-0">#${idx + 1}</span>
+                        <span class="px-1.5 py-0.5 rounded border shrink-0 ${cat.badgeBg}">${st.icon} ${st.short}</span>
+                        <span class="text-slate-300 break-words">${escapeHtml(d.text)}</span>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+                <div>
+                  <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Исходный текст:</div>
+                  <pre class="p-3 rounded-xl bg-lake-950/85 border border-slate-800 text-xs text-slate-400 whitespace-pre-wrap break-words max-h-40 overflow-y-auto font-sans">${escapeHtml(session.rawText)}</pre>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* =========================================================================
+       ИНТЕРАКТИВНЫЙ ПРЕДПРОСМОТР ПАРСЕРА И РУЧНАЯ ПЕРЕКЛАССИФИКАЦИЯ
+       ========================================================================= */
+    function updateParserPreview() {
+      const text = document.getElementById('parser-input').value;
+      const result = parseCatWarLog(text);
+      previewDives = result.dives;
+      previewCancelledCount = result.cancelledCount;
+      renderPreviewBox();
+    }
+
+    function renderPreviewBox() {
+      const box = document.getElementById('parser-preview-box');
+      const addBtn = document.getElementById('btn-add-dives');
+      const countBadge = document.getElementById('preview-count-badge');
+      const cancelBadge = document.getElementById('preview-cancelled-badge');
+      const tagsEl = document.getElementById('preview-tags');
+
+      if (!previewDives.length && !previewCancelledCount) {
+        box.classList.add('hidden');
+        addBtn.disabled = true;
+        return;
+      }
+
+      box.classList.remove('hidden');
+      addBtn.disabled = previewDives.length === 0;
+      countBadge.textContent = `Найдено нырков: ${previewDives.length}`;
+
+      if (previewCancelledCount > 0) {
+        cancelBadge.textContent = `Пропущено отменённых: ${previewCancelledCount}`;
+        cancelBadge.classList.remove('hidden');
+      } else {
+        cancelBadge.classList.add('hidden');
+      }
+
+      tagsEl.innerHTML = previewDives.map((d, idx) => {
+        const st = SUBTYPES[d.subtype] || SUBTYPES.empty;
+        const cat = CATEGORIES[st.category];
+        const uncertainStyle = d.uncertain ? 'border-dashed border-amber-400 ring-1 ring-amber-400/30' : '';
+        return `
+          <button type="button" onclick="openReclassifyModal(${idx})"
+            title="${escapeHtml(d.text)} — нажмите, чтобы изменить"
+            class="group px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition hover:scale-[1.02] active:scale-[0.98] ${cat.badgeBg} ${uncertainStyle}">
+            <span class="opacity-60 font-mono text-[10px]">${idx + 1}.</span>
+            <span>${st.icon}</span>
+            <span>${st.short}</span>
+            ${d.uncertain ? '<span class="text-amber-300 font-extrabold" title="Сомнительная фраза — проверьте категорию">?</span>' : ''}
+          </button>
+        `;
+      }).join('');
+    }
+
+    let reclassifyIndex = -1;
+    function openReclassifyModal(idx) {
+      const dive = previewDives[idx];
+      if (!dive) return;
+      reclassifyIndex = idx;
+
+      document.getElementById('reclassify-snippet').textContent = `«${dive.text}»`;
+      const optionsEl = document.getElementById('reclassify-options');
+      optionsEl.innerHTML = Object.entries(SUBTYPES).map(([stKey, st]) => {
+        const cat = CATEGORIES[st.category];
+        const isCurrent = dive.subtype === stKey;
+        return `
+          <button type="button" onclick="applyReclassify('${stKey}')"
+            class="p-2.5 rounded-xl border text-left text-xs font-semibold transition flex items-center gap-2 ${cat.badgeBg} ${isCurrent ? 'ring-2 ring-cyan-300' : 'hover:brightness-125'}">
+            <span class="text-base">${st.icon}</span>
+            <span class="leading-tight">${st.label}</span>
+          </button>
+        `;
+      }).join('');
+
+      const modal = document.getElementById('reclassify-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeReclassifyModal() {
+      const modal = document.getElementById('reclassify-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      reclassifyIndex = -1;
+    }
+
+    function applyReclassify(newSubtype) {
+      if (reclassifyIndex < 0 || !previewDives[reclassifyIndex]) return;
+      const st = SUBTYPES[newSubtype];
+      if (!st) return;
+      previewDives[reclassifyIndex].subtype = newSubtype;
+      previewDives[reclassifyIndex].category = st.category;
+      previewDives[reclassifyIndex].uncertain = false;
+      closeReclassifyModal();
+      renderPreviewBox();
+    }
+
+    document.getElementById('reclassify-close').addEventListener('click', closeReclassifyModal);
+    document.getElementById('reclassify-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'reclassify-modal') closeReclassifyModal();
+    });
+
+    /* =========================================================================
+       ОБРАБОТЧИКИ ДЕЙСТВИЙ ПОЛЬЗОВАТЕЛЯ
+       ========================================================================= */
+    function switchTab(tabName) {
+      currentTab = tabName;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      const activePanel = document.getElementById(`tab-${tabName}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const isActive = btn.dataset.tab === tabName;
+        btn.className = isActive
+          ? 'tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 bg-cyan-500/20 text-cyan-200 border border-cyan-400/35 shadow-sm'
+          : 'tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent';
+      });
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // Ввод в парсер
+    document.getElementById('parser-input').addEventListener('input', updateParserPreview);
+
+    // Добавить в статистику
+    document.getElementById('btn-add-dives').addEventListener('click', () => {
+      if (!previewDives.length) return;
+      const rawText = document.getElementById('parser-input').value.trim();
+      const newSession = {
+        id: uid('sess'),
+        timestamp: Date.now(),
+        rawText,
+        dives: previewDives.map(d => ({
+          id: d.id,
+          text: d.text,
+          subtype: d.subtype,
+          category: d.category
+        }))
+      };
+      state.sessions.push(newSession);
+      saveState();
+
+      const addedCount = previewDives.length;
+      document.getElementById('parser-input').value = '';
+      previewDives = [];
+      previewCancelledCount = 0;
+      renderPreviewBox();
+      renderAll();
+      showToast(`Добавлено нырков: ${addedCount}!`, 'success');
+    });
+
+    // Вставить пример истории (сочетает кота, кошку, ложные пустые фразы и лишние действия)
+    document.getElementById('btn-load-sample').addEventListener('click', () => {
+      const sample = [
+        'Нырнула. Обнаружила целебную водоросль.',
+        'Поплавала. Подняла предмет.',
+        'Нырнула. Почти достала со дна красивую ракушку, но в последний момент она выскользнула из лап.',
+        'Нырнула. Обнаружила красивую ракушку!',
+        'Нырнул. Обнаружил водный мох.',
+        'Нырнул. Обнаружил мох.',
+        'Зевнул. Пошёл в локацию Берег.',
+        'Нырнула. Смотрю на камень. Камень смотрит на меня.',
+        'Нырнула. Обнаружила гладкий камень.',
+        'Нырнул. Поймал карася.',
+        'Нырнула. Погналась за косяком мальков, но они оказались слишком шустрыми.',
+        'Нырнула. Обнаружила живого рака. Он цапнул меня за нос!',
+        'Нырнул. Рак заметил меня и угрожающе клацнул клешнёй.',
+        'Нырнула. Обнаружила комок водорослей.',
+        'Нырнула. Обнаружила искру!',
+        'Нырнула. Обнаружила плотную водоросль.',
+        'Нырнул. Обнаружил крепкую ветку.',
+        'Нырнула. Хотела поймать лягушку, но она скрылась в водорослях.',
+        'Нырнула. Увидела огромного сома. Испугалась.',
+        'Нырнул. Наткнулся на угря, который ударил током.',
+        'Нырнула. Отменила действие.',
+        'Нырнула. Не нашла ничего интересного.'
+      ].join('\n');
+      document.getElementById('parser-input').value = sample;
+      updateParserPreview();
+      showToast('Загружен пример лога — проверьте предпросмотр ниже', 'info');
+    });
+
+    // Очистить поле ввода
+    document.getElementById('btn-clear-input').addEventListener('click', () => {
+      document.getElementById('parser-input').value = '';
+      previewDives = [];
+      previewCancelledCount = 0;
+      renderPreviewBox();
+    });
+
+    // Ракушки: редактирование, шаг, добавление, удаление
+    window.updateShellField = function(id, field, value) {
+      const sh = state.shells.find(s => s.id === id);
+      if (!sh) return;
+      if (field === 'name') {
+        sh.name = String(value).trim() || 'Без названия';
+      } else {
+        sh[field] = Math.max(0, Number(value) || 0);
+      }
+      saveState();
+      renderAll();
+    };
+
+    window.stepShellField = function(id, field, delta) {
+      const sh = state.shells.find(s => s.id === id);
+      if (!sh) return;
+      sh[field] = Math.max(0, (Number(sh[field]) || 0) + delta);
+      saveState();
+      renderAll();
+    };
+
+    window.deleteShellType = function(id) {
+      if (state.shells.length <= 1) return;
+      state.shells = state.shells.filter(s => s.id !== id);
+      saveState();
+      renderAll();
+      showToast('Вид ракушки удалён', 'info');
+    };
+
+    document.getElementById('btn-add-shell-type').addEventListener('click', () => {
+      state.shells.push({
+        id: uid('sh'),
+        name: `Новая ракушка ${state.shells.length + 1}`,
+        pu: 30,
+        points: 2,
+        caught: 0,
+        used: 0
+      });
+      saveState();
+      renderAll();
+      showToast('Добавлен новый вид ракушки', 'success');
+    });
+
+    // Комки
+    window.adjustLumpField = function(field, delta) {
+      const cur = Number(state.lumps[field]) || 0;
+      state.lumps[field] = field === 'manualOffset' ? cur + delta : Math.max(0, cur + delta);
+      saveState();
+      renderAll();
+    };
+
+    window.setLumpField = function(field, val) {
+      const num = Number(val) || 0;
+      state.lumps[field] = field === 'manualOffset' ? num : Math.max(0, num);
+      saveState();
+      renderAll();
+    };
+
+    // Настройки баллов и HP
+    window.updatePointSetting = function(key, val) {
+      state.settings.points[key] = Math.max(0, Number(val) || 0);
+      saveState();
+      renderAll();
+    };
+
+    window.toggleUseShellTablePoints = function(checked) {
+      state.settings.useShellTablePoints = Boolean(checked);
+      saveState();
+      renderAll();
+    };
+
+    window.applyPointsPreset = function(preset) {
+      if (preset === 'sk') {
+        state.settings.points = { cv: 2, plotka: 2, moss: 1, branch: 1, stone: 1, shell: 2 };
+        showToast('Применён пресет «Стандарт СК»', 'success');
+      } else {
+        state.settings.points = { cv: 1, plotka: 1, moss: 1, branch: 1, stone: 1, shell: 1 };
+        showToast('Установлена равная стоимость (по 1 баллу)', 'info');
+      }
+      saveState();
+      renderAll();
+    };
+
+    window.updateHpSetting = function(key, val) {
+      state.settings.hpLoss[key] = Math.max(0, Math.min(100, Number(val) || 0));
+      saveState();
+      renderAll();
+    };
+
+    // Пользовательские правила
+    document.getElementById('btn-add-custom-rule').addEventListener('click', () => {
+      const phraseEl = document.getElementById('custom-rule-phrase');
+      const subtypeEl = document.getElementById('custom-rule-subtype');
+      const phrase = phraseEl.value.trim();
+      if (!phrase) {
+        showToast('Введите фразу для распознавания', 'error');
+        return;
+      }
+      state.settings.customRules.push({
+        id: uid('rule'),
+        phrase,
+        subtype: subtypeEl.value
+      });
+      phraseEl.value = '';
+      saveState();
+      renderSettings();
+      updateParserPreview();
+      showToast('Пользовательское правило добавлено', 'success');
+    });
+
+    window.deleteCustomRule = function(id) {
+      state.settings.customRules = state.settings.customRules.filter(r => r.id !== id);
+      saveState();
+      renderSettings();
+      updateParserPreview();
+      showToast('Правило удалено', 'info');
+    };
+
+    // Стартовые значения
+    window.updateStartingStat = function(key, val) {
+      state.settings.startingStats[key] = Math.max(0, Math.floor(Number(val) || 0));
+      saveState();
+      renderAll();
+    };
+
+    window.clearStartingStats = function() {
+      openConfirmModal({
+        title: 'Обнулить стартовые значения?',
+        message: 'Все ручные поправки из раздела переноса таблицы станут равны 0. Сессии в журнале останутся нетронутыми.',
+        okText: 'Обнулить',
+        onConfirm: () => {
+          state.settings.startingStats = getDefaultState().settings.startingStats;
+          saveState();
+          renderAll();
+          showToast('Стартовые значения обнулены', 'info');
+        }
+      });
+    };
+
+    // Журнал: поиск, фильтр, раскрытие, удаление
+    document.getElementById('journal-search').addEventListener('input', (e) => {
+      journalSearchQuery = e.target.value;
+      renderJournal();
+    });
+
+    window.setJournalFilter = function(catKey) {
+      journalFilter = catKey;
+      renderJournal();
+    };
+
+    window.toggleSessionExpand = function(id) {
+      if (expandedSessionIds.has(id)) {
+        expandedSessionIds.delete(id);
+      } else {
+        expandedSessionIds.add(id);
+      }
+      renderJournal();
+    };
+
+    window.confirmDeleteSession = function(id) {
+      const sess = state.sessions.find(s => s.id === id);
+      if (!sess) return;
+      openConfirmModal({
+        title: 'Удалить сессию из журнала?',
+        message: `Будет удалена сессия (${sess.dives.length} нырков), а вся общая статистика мгновенно пересчитается.`,
+        okText: 'Удалить сессию',
+        onConfirm: () => {
+          state.sessions = state.sessions.filter(s => s.id !== id);
+          expandedSessionIds.delete(id);
+          saveState();
+          renderAll();
+          showToast('Сессия удалена, статистика обновлена', 'info');
+        }
+      });
+    };
+
+    // Экспорт / Импорт JSON / Полный сброс
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      try {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateTag = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `catwar-dives-backup-${dateTag}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast('Резервная копия (.json) скачана!', 'success');
+      } catch (e) {
+        showToast('Ошибка при создании файла резервной копии', 'error');
+      }
+    });
+
+    document.getElementById('input-import-json').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.sessions)) {
+            throw new Error('Неверный формат файла');
+          }
+          openConfirmModal({
+            title: 'Загрузить резервную копию?',
+            message: `Найдено сессий: ${parsed.sessions.length}. Текущие данные в браузере будут заменены данными из файла.`,
+            okText: 'Загрузить',
+            danger: false,
+            onConfirm: () => {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+              state = loadState();
+              renderAll();
+              showToast('Данные успешно восстановлены из файла!', 'success');
+            }
+          });
+        } catch (err) {
+          showToast('Не удалось прочитать файл: убедитесь, что это корректный .json от трекера', 'error');
+        } finally {
+          e.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('btn-reset-all').addEventListener('click', () => {
+      openConfirmModal({
+        title: 'Сбросить всю статистику?',
+        message: 'Будут удалены все сессии, журнал, учёт ракушек, комков и настройки. Советуем сначала скачать резервную копию (.json).',
+        okText: 'Сбросить всё',
+        danger: true,
+        onConfirm: () => {
+          state = getDefaultState();
+          expandedSessionIds.clear();
+          saveState();
+          renderAll();
+          showToast('Вся статистика сброшена', 'info');
+        }
+      });
+    });
+
+    /* =========================================================================
+       ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
+       ========================================================================= */
+    switchTab('overview');
+    renderAll();
+  </script>
+</body>
+</html>
