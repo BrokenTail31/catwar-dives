@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Статистика нырков CatWar — Озёрный трекер</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='bg' cx='30%25' cy='25%25' r='75%25'%3E%3Cstop offset='0%25' stop-color='%23164e63'/%3E%3Cstop offset='100%25' stop-color='%23071017'/%3E%3C/radialGradient%3E%3ClinearGradient id='sh' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23fde68a'/%3E%3Cstop offset='55%25' stop-color='%23f59e0b'/%3E%3Cstop offset='100%25' stop-color='%23b45309'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23bg)'/%3E%3Cpath d='M32 14 C19 14 11 24 13 36 C14 43 20 48 25 50 L23 54 L41 54 L39 50 C44 48 50 43 51 36 C53 24 45 14 32 14 Z' fill='url(%23sh)' stroke='%23fef3c7' stroke-width='1.5'/%3E%3Cpath d='M32 15 L32 49 M24 17 L27 49 M40 17 L37 49 M17 24 L23 48 M47 24 L41 48' stroke='%2378350f' stroke-width='1.6' stroke-linecap='round' opacity='0.55'/%3E%3Cpath d='M49 10 L51 16 L57 18 L51 20 L49 26 L47 20 L41 18 L47 16 Z' fill='%23fef08a'/%3E%3C/svg%3E" />
 
   <!-- Google Fonts: Inter (с поддержкой кириллицы) -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐚</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -157,16 +157,19 @@
 
       <!-- Навигация по вкладкам -->
       <nav class="grid grid-cols-2 sm:flex items-center gap-1.5 bg-lake-950/70 p-1 rounded-2xl border border-slate-700/40" aria-label="Основные разделы">
-        <button data-tab="overview" class="tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+        <button data-tab="overview" class="tab-btn px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
           <span>🌊</span><span>Обзор и ввод</span>
         </button>
-        <button data-tab="shells" class="tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+        <button data-tab="pu" class="tab-btn px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+          <span>🧭</span><span>Калькулятор ПУ</span>
+        </button>
+        <button data-tab="shells" class="tab-btn px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
           <span>🐚</span><span>Ракушки и комки</span>
         </button>
-        <button data-tab="settings" class="tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
-          <span>⚙️</span><span>Баллы и настройки</span>
+        <button data-tab="settings" class="tab-btn px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+          <span>⚙️</span><span>Настройки</span>
         </button>
-        <button data-tab="journal" class="tab-btn px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
+        <button data-tab="journal" class="tab-btn col-span-2 sm:col-span-1 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-1.5">
           <span>📜</span><span>Журнал</span>
           <span id="journal-count-badge" class="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] bg-cyan-500/20 text-cyan-200">0</span>
         </button>
@@ -181,6 +184,28 @@
     <!-- ВКЛАДКА 1: ОБЗОР И ВВОД -->
     <!-- ===================================================================== -->
     <section id="tab-overview" class="tab-panel space-y-6">
+
+      <!-- Мини-виджет прогресса ПУ на главной -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 border border-cyan-400/25">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2.5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-1 rounded-xl bg-cyan-500/20 border border-cyan-400/35 text-cyan-200 text-xs font-extrabold">
+              🧭 <span id="mini-pu-level">5 ур. ПУ</span>
+            </span>
+            <span id="mini-pu-progress-text" class="text-sm sm:text-base font-extrabold text-slate-100">0 / 300</span>
+            <span id="mini-pu-exact-text" class="text-xs text-slate-400">(точное: 0)</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5 text-xs">
+            <span id="mini-pu-remaining" class="text-teal-300 font-semibold">До 6 ур.: 30 нырков (~52 мин)</span>
+            <button type="button" onclick="switchTab('pu')" class="px-3 py-1.5 rounded-xl bg-lake-800 hover:bg-lake-700 border border-cyan-400/25 text-cyan-200 font-semibold transition">
+              Открыть калькулятор →
+            </button>
+          </div>
+        </div>
+        <div class="w-full h-2.5 rounded-full bg-slate-800/90 overflow-hidden">
+          <div id="mini-pu-bar" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-300 transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
 
       <!-- KPI-карточки -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
@@ -350,6 +375,210 @@
     </section>
 
     <!-- ===================================================================== -->
+    <!-- ВКЛАДКА 1.5: КАЛЬКУЛЯТОР ПУ (ПЛАВАТЕЛЬНЫХ УМЕНИЙ) -->
+    <!-- ===================================================================== -->
+    <section id="tab-pu" class="tab-panel hidden space-y-6">
+
+      <!-- Главная шкала прогресса и быстрые действия -->
+      <div class="glass-card rounded-2xl p-4 sm:p-6 border border-cyan-400/25">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+          <div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <h2 class="text-lg sm:text-xl font-extrabold text-slate-50 flex items-center gap-2">
+                <span>🧭</span> Прогресс плавательных умений (ПУ)
+              </h2>
+              <span id="pu-hero-badge" class="px-3 py-1 rounded-xl bg-cyan-500/20 border border-cyan-400/35 text-cyan-200 text-xs font-bold">
+                Уровень 5 → 6
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+              В CatWar значение навыка хранится с дробной долей, а на полоске отображается округление вниз.
+            </p>
+          </div>
+
+          <!-- Быстрые кнопки симуляции / ручного плюса -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="simulatePuDives(1)" class="px-3.5 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/35 text-cyan-200 text-xs sm:text-sm font-bold transition">
+              +1 нырок
+            </button>
+            <button type="button" onclick="simulatePuDives(10)" class="px-3.5 py-2.5 rounded-xl bg-teal-500/20 hover:bg-teal-500/30 border border-teal-400/35 text-teal-200 text-xs sm:text-sm font-bold transition">
+              +10 нырков
+            </button>
+            <button type="button" onclick="resetPuSync()" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600/50 text-slate-300 text-xs sm:text-sm font-medium transition">
+              🔄 Сбросить на 0
+            </button>
+          </div>
+        </div>
+
+        <!-- Визуальная игровая полоска ПУ -->
+        <div class="p-4 rounded-2xl bg-lake-950/75 border border-slate-700/50">
+          <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2.5">
+            <div class="flex items-baseline gap-2.5">
+              <span id="pu-display-floor" class="text-2xl sm:text-3xl font-extrabold text-cyan-200 tracking-tight">0 / 300</span>
+              <span id="pu-display-exact" class="text-xs sm:text-sm text-slate-400">(точное значение: 0)</span>
+            </div>
+            <span id="pu-display-pct" class="text-sm sm:text-base font-bold text-teal-300">0%</span>
+          </div>
+          <div class="w-full h-4 rounded-full bg-slate-800/95 overflow-hidden p-0.5 border border-slate-700/60">
+            <div id="pu-progress-bar" class="h-full rounded-full bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-300 transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Итоговые карточки расчёта -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4">
+          <div class="glass-subcard rounded-2xl p-4">
+            <div class="text-xs text-slate-400">Осталось набрать ПУ</div>
+            <div id="pu-res-needed" class="mt-1.5 text-xl sm:text-2xl font-extrabold text-slate-100">300 ПУ</div>
+            <div id="pu-res-target-sub" class="mt-1 text-xs text-slate-400">До 6 уровня ПУ</div>
+          </div>
+
+          <div class="glass-subcard rounded-2xl p-4 border-cyan-400/20">
+            <div class="text-xs text-cyan-200/80">Осталось нырков</div>
+            <div id="pu-res-dives" class="mt-1.5 text-xl sm:text-2xl font-extrabold text-cyan-300">30 нырков</div>
+            <div id="pu-res-rate-sub" class="mt-1 text-xs text-slate-400">Сейчас: +10 ПУ за нырок</div>
+          </div>
+
+          <div class="glass-subcard rounded-2xl p-4 border-teal-400/20">
+            <div class="text-xs text-teal-200/80">Чистое время ныряния</div>
+            <div id="pu-res-time" class="mt-1.5 text-xl sm:text-2xl font-extrabold text-teal-300">52 мин 30 сек</div>
+            <div id="pu-res-dive-dur" class="mt-1 text-xs text-slate-400">1 нырок = 1 мин 45 сек</div>
+          </div>
+
+          <div class="glass-subcard rounded-2xl p-4 border-amber-300/25">
+            <div class="text-xs text-amber-200/85">Если съесть ракушки из кучи</div>
+            <div id="pu-res-shells-pu" class="mt-1.5 text-xl sm:text-2xl font-extrabold text-amber-300">+0 ПУ</div>
+            <div id="pu-res-shells-save" class="mt-1 text-xs text-amber-200/75">Сэкономит 0 нырков</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Настройки параметров персонажа и активных баффов -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- Левая колонка: Уровень, точное значение, рот, автоначисление -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6 space-y-5">
+          <h3 class="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
+            <span>🐱</span> Параметры персонажа
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label for="pu-current-level" class="block text-xs font-semibold text-slate-300 mb-1.5">Текущий уровень ПУ</label>
+              <select id="pu-current-level" onchange="updatePuLevel(this.value)" class="w-full px-3.5 py-2.5 rounded-xl bg-lake-950/85 border border-slate-700 focus:border-cyan-400/60 outline-none text-sm font-semibold text-slate-100">
+                <option value="5">5 уровень (порог 300)</option>
+                <option value="6">6 уровень (порог 500)</option>
+                <option value="7">7 уровень (порог 2000)</option>
+                <option value="8">8 уровень (порог 7000)</option>
+                <option value="9">9 уровень (максимум)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="pu-target-level" class="block text-xs font-semibold text-slate-300 mb-1.5">Целевой уровень ПУ</label>
+              <select id="pu-target-level" onchange="updatePuTargetLevel(this.value)" class="w-full px-3.5 py-2.5 rounded-xl bg-lake-950/85 border border-slate-700 focus:border-cyan-400/60 outline-none text-sm font-semibold text-slate-100"></select>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label for="pu-exact-input" class="text-xs font-semibold text-slate-300">Текущее значение на полоске (можно с дробью)</label>
+              <span id="pu-threshold-hint" class="text-xs text-cyan-300 font-medium">из 300</span>
+            </div>
+            <input id="pu-exact-input" type="number" step="0.05" min="0" value="0" onchange="updatePuExactValue(this.value)"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-lake-950/85 border border-cyan-400/25 focus:border-cyan-400/60 outline-none text-base font-bold text-cyan-100" />
+          </div>
+
+          <!-- Состояние места во рту -->
+          <div>
+            <div class="text-xs font-semibold text-slate-300 mb-2">Свободное место во рту при нырянии</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button type="button" id="btn-mouth-free" onclick="updatePuMouthFree(true)"
+                class="p-3 rounded-xl border text-left transition">
+                <div class="text-xs sm:text-sm font-bold">👄 Есть свободное место</div>
+                <div class="text-[11px] opacity-80 mt-0.5">100% базового ПУ (10 / 8 / 6 / 5 / 4)</div>
+              </button>
+              <button type="button" id="btn-mouth-full" onclick="updatePuMouthFree(false)"
+                class="p-3 rounded-xl border text-left transition">
+                <div class="text-xs sm:text-sm font-bold">🪨 Нет свободных мест</div>
+                <div class="text-[11px] opacity-80 mt-0.5">50% базового ПУ (5 / 4 / 3 / 2.5 / 2)</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Автоначисление при добавлении логов -->
+          <label class="p-3.5 rounded-xl bg-lake-950/65 border border-cyan-400/15 flex items-start gap-3 cursor-pointer">
+            <input id="pu-auto-track" type="checkbox" class="mt-0.5 w-4 h-4 rounded accent-cyan-400" onchange="updatePuAutoTrack(this.checked)" />
+            <div class="text-xs sm:text-sm">
+              <div class="font-semibold text-slate-100">Автоматически прибавлять ПУ при вставке новых логов</div>
+              <div class="text-xs text-slate-400 mt-0.5">Каждый добавленный через парсер нырок сразу сдвинет полоску ПУ с учётом выбранных здесь условий и баффов.</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Правая колонка: Баффы (опыт и скорость) + Справочная таблица -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6 space-y-5">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-amber-200 flex items-center gap-2">
+              <span>✨</span> Активные баффы на ныряние
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Баффы на +ПУ не складываются, а перекрывают друг друга — выберите тот, что активен сейчас.
+            </p>
+          </div>
+
+          <!-- Взаимоисключающие баффы на +ПУ -->
+          <div class="space-y-2" id="pu-exp-buff-list">
+            <!-- Рендерится из JS -->
+          </div>
+
+          <!-- Независимый бафф на скорость -->
+          <div class="pt-3 border-t border-slate-700/50">
+            <div class="text-xs font-semibold text-slate-300 mb-2">Бафф на скорость действий (сочетается с баффом на опыт)</div>
+            <label class="p-3.5 rounded-xl bg-lake-950/65 border border-teal-400/25 hover:border-teal-400/45 flex items-center justify-between gap-3 cursor-pointer transition">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">🦆</span>
+                <div>
+                  <div class="text-xs sm:text-sm font-bold text-teal-200">Утёнок мандаринки (8 ч)</div>
+                  <div class="text-[11px] text-slate-400">Уменьшает длительность «Нырнуть» и «Поплавать» на 20%</div>
+                </div>
+              </div>
+              <input id="pu-speed-buff" type="checkbox" class="w-5 h-5 rounded accent-teal-400 shrink-0" onchange="updatePuSpeedBuff(this.checked)" />
+            </label>
+          </div>
+
+          <!-- Компактная шпаргалка по уровням -->
+          <div class="pt-3 border-t border-slate-700/50">
+            <div class="text-xs font-semibold text-slate-400 mb-2">Справочник уровней ныряния CatWar:</div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-700/60 text-slate-400">
+                    <th class="py-1.5 pr-2">Ур.</th>
+                    <th class="py-1.5 px-2">Порог</th>
+                    <th class="py-1.5 px-2">С местом</th>
+                    <th class="py-1.5 px-2">Без места</th>
+                    <th class="py-1.5 pl-2 text-right">Время</th>
+                  </tr>
+                </thead>
+                <tbody id="pu-reference-tbody" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Поэтапная разбивка (если выбрано несколько уровней вперёд) -->
+      <div id="pu-stages-card" class="hidden glass-card rounded-2xl p-4 sm:p-6">
+        <h3 class="text-base font-bold text-cyan-200 mb-3 flex items-center gap-2">
+          <span>🪜</span> Поэтапный маршрут прокачки
+        </h3>
+        <div id="pu-stages-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+      </div>
+
+    </section>
+
+    <!-- ===================================================================== -->
     <!-- ВКЛАДКА 2: РАКУШКИ И КОМКИ -->
     <!-- ===================================================================== -->
     <section id="tab-shells" class="tab-panel hidden space-y-6">
@@ -398,10 +627,10 @@
 
         <!-- Таблица ракушек (адаптивный скролл на узких экранах) -->
         <div class="overflow-x-auto -mx-2 px-2">
-          <table class="w-full text-left border-collapse min-w-[720px]">
+          <table class="w-full text-left border-collapse min-w-[780px]">
             <thead>
               <tr class="border-b border-slate-700/60 text-[11px] uppercase tracking-wider text-slate-400">
-                <th class="py-2.5 pr-3">Вид ракушки</th>
+                <th class="py-2.5 pr-3">Вид ракушки и игровой эффект</th>
                 <th class="py-2.5 px-2 w-24 text-center">+ПУ</th>
                 <th class="py-2.5 px-2 w-24 text-center">Баллы</th>
                 <th class="py-2.5 px-2 text-center">Поймано</th>
@@ -710,23 +939,126 @@
     const STORAGE_KEY = 'catwar_dives_tracker_v1';
 
     /* =========================================================================
+       ТАБЛИЦА УРОВНЕЙ ПУ И БАФФОВ CATWAR
+       ========================================================================= */
+    const PU_LEVELS = {
+      5: { threshold: 300,  baseFree: 10, baseFull: 5,   durationSec: 105 },
+      6: { threshold: 500,  baseFree: 8,  baseFull: 4,   durationSec: 100 },
+      7: { threshold: 2000, baseFree: 6,  baseFull: 3,   durationSec: 95  },
+      8: { threshold: 7000, baseFree: 5,  baseFull: 2.5, durationSec: 90  },
+      9: { threshold: null, baseFree: 4,  baseFull: 2,   durationSec: 85  }
+    };
+
+    const PU_EXP_BUFFS = {
+      none:    { label: 'Без баффа на опыт',                    mult: 1.0, badge: '×1 (100%)', icon: '🌊', desc: 'Стандартное получение ПУ за нырок' },
+      otter:   { label: 'Выдрёнок (8 ч)',                       mult: 1.3, badge: '+30% ПУ',   icon: '🦦', desc: 'Повышает получаемые ПУ на 30% (работает на нырках)' },
+      murka:   { label: 'Пропуск: По следам Мурки (3 ч)',       mult: 1.3, badge: '+30% ПУ',   icon: '🐾', desc: 'Повышает получаемые очки ПУ на 30% при нырянии' },
+      charlie: { label: 'Пропуск: По следам Чарли (3 ч)',      mult: 1.5, badge: '+50% ПУ',   icon: '⭐', desc: 'Повышает получаемые ПУ на 50% при нырянии' }
+    };
+
+    /* =========================================================================
+       ИНДИВИДУАЛЬНЫЕ SVG-ИКОНКИ ДЛЯ 5 ИГРОВЫХ ВИДОВ РАКУШЕК
+       ========================================================================= */
+    const SHELL_SVGS = {
+      teal_flat: `<svg viewBox="0 0 36 36" class="w-8 h-8 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 20 C7 13 15 11 24 12 C29 13 32 16 31 20 C27 23 14 24 5 20 Z" fill="#2dd4bf" stroke="#99f6e4" stroke-width="1.3"/>
+        <path d="M9 19 C13 15 19 14 26 15 M12 21 C16 17 22 16 29 17" stroke="#0f766e" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>`,
+      teal_fan: `<svg viewBox="0 0 36 36" class="w-8 h-8 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 6 C10 6 6 12 8 20 C9 24 13 27 15 28 L14 31 L22 31 L21 28 C23 27 27 24 28 20 C30 12 26 6 18 6 Z" fill="#5eead4" stroke="#ccfbf1" stroke-width="1.3"/>
+        <path d="M18 7 L18 28 M13 8 L15 28 M23 8 L21 28 M9 13 L13 27 M27 13 L23 27" stroke="#115e59" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>`,
+      pearl_sleep: `<svg viewBox="0 0 36 36" class="w-8 h-8 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 6 C11 6 7 11 9 17 C10 20 13 22 18 22 C23 22 26 20 27 17 C29 11 25 6 18 6 Z" fill="#bae6fd" stroke="#e0f2fe" stroke-width="1.2"/>
+        <path d="M9 21 C9 26 13 30 18 30 C23 30 27 26 27 21 C23 23 13 23 9 21 Z" fill="#7dd3fc" stroke="#e0f2fe" stroke-width="1.2"/>
+        <circle cx="18" cy="20.5" r="4.2" fill="#f8fafc" stroke="#38bdf8" stroke-width="1.1"/>
+        <circle cx="16.7" cy="19.2" r="1.2" fill="#ffffff"/>
+      </svg>`,
+      orange_big: `<svg viewBox="0 0 36 36" class="w-8 h-8 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 5 C9 5 5 12 7 21 C8 25 12 28 15 29 L13 32 L23 32 L21 29 C24 28 28 25 29 21 C31 12 27 5 18 5 Z" fill="#fb923c" stroke="#fed7aa" stroke-width="1.4"/>
+        <path d="M18 6 L18 29 M12 7 L15 29 M24 7 L21 29 M8 13 L13 28 M28 13 L23 28" stroke="#9a3412" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>`,
+      orange_spiral: `<svg viewBox="0 0 36 36" class="w-8 h-8 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 7 C14 7 9 12 9 19 C9 25 14 29 20 29 C25 29 28 25 28 20 C28 16 25 13 21 13 C18 13 15 15 15 18 C15 21 17 23 20 23 C22 23 23 21 23 19" fill="#ea580c" stroke="#fed7aa" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M9 21 L6 25 L12 27" fill="#c2410c" stroke="#fed7aa" stroke-width="1.2" stroke-linejoin="round"/>
+      </svg>`,
+      custom: `<svg viewBox="0 0 36 36" class="w-8 h-8 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 7 C11 7 7 13 8 20 C9 25 13 28 18 29 C23 28 27 25 28 20 C29 13 25 7 18 7 Z" fill="#fbbf24" stroke="#fef3c7" stroke-width="1.3"/>
+      </svg>`
+    };
+
+    /* =========================================================================
        СОСТОЯНИЕ ПО УМОЛЧАНИЮ И ЗАГРУЗКА/СОХРАНЕНИЕ
        ========================================================================= */
     function getDefaultState() {
       return {
         sessions: [],
         shells: [
-          { id: 'sh_1', name: 'Обычная (Мелкая)',    pu: 25, points: 1,   caught: 0, used: 0 },
-          { id: 'sh_2', name: 'Речная',              pu: 35, points: 1.5, caught: 0, used: 0 },
-          { id: 'sh_3', name: 'Перламутровая',       pu: 45, points: 2,   caught: 0, used: 0 },
-          { id: 'sh_4', name: 'Редкая',              pu: 50, points: 3,   caught: 0, used: 0 },
-          { id: 'sh_5', name: 'Королевская (Особая)', pu: 50, points: 5,   caught: 0, used: 0 },
+          {
+            id: 'sh_1',
+            iconKey: 'teal_flat',
+            name: 'Небольшая ракушка (бирюзовая ребристая)',
+            effectNote: 'Даёт +15 к ПУ при съедании',
+            pu: 15,
+            points: 2,
+            caught: 0,
+            used: 0
+          },
+          {
+            id: 'sh_2',
+            iconKey: 'teal_fan',
+            name: 'Небольшая ракушка (бирюзовая веерная)',
+            effectNote: 'Даёт +28 к ПУ при съедании',
+            pu: 28,
+            points: 2,
+            caught: 0,
+            used: 0
+          },
+          {
+            id: 'sh_3',
+            iconKey: 'pearl_sleep',
+            name: 'Небольшая ракушка (перламутровая)',
+            effectNote: 'Снимает 8–10 мин сна (при сне > 35 мин в водах)',
+            pu: 0,
+            points: 2,
+            caught: 0,
+            used: 0
+          },
+          {
+            id: 'sh_4',
+            iconKey: 'orange_big',
+            name: 'Большая ракушка (оранжевая веерная)',
+            effectNote: 'Даёт +30 к ПУ при съедании',
+            pu: 30,
+            points: 3,
+            caught: 0,
+            used: 0
+          },
+          {
+            id: 'sh_5',
+            iconKey: 'orange_spiral',
+            name: 'Небольшая ракушка (оранжевая спиральная)',
+            effectNote: 'Даёт +20 к ПУ при съедании',
+            pu: 20,
+            points: 2,
+            caught: 0,
+            used: 0
+          }
         ],
         lumps: {
           manualOffset: 0,
           spawnCollected: 0,
           shellsDropped: 0,
           fryDropped: 0
+        },
+        puTracker: {
+          level: 5,
+          targetLevel: 6,
+          exactPu: 0,
+          hasFreeSpace: true,
+          expBuff: 'none',
+          speedBuff: false,
+          autoTrackLogs: true
         },
         settings: {
           points: {
@@ -741,7 +1073,7 @@
           hpLoss: {
             crab: 5,
             toad: 10,
-            eel: 15
+            eel: 10
           },
           customRules: [],
           startingStats: {
@@ -769,14 +1101,37 @@
         if (!raw) return getDefaultState();
         const parsed = JSON.parse(raw);
         const def = getDefaultState();
+
+        // Мягкая миграция старых шаблонных названий ракушек на 5 точных игровых видов CatWar
+        let shellsList = Array.isArray(parsed.shells) && parsed.shells.length ? parsed.shells : def.shells;
+        const legacyNames = ['Обычная (Мелкая)', 'Речная', 'Перламутровая', 'Редкая', 'Королевская (Особая)'];
+        const isUnmodifiedLegacy =
+          shellsList.length === 5 &&
+          shellsList.every((s, idx) => s.name === legacyNames[idx]);
+
+        if (isUnmodifiedLegacy) {
+          shellsList = def.shells.map((dItem, idx) => ({
+            ...dItem,
+            caught: Math.max(0, Number(shellsList[idx].caught) || 0),
+            used: Math.max(0, Number(shellsList[idx].used) || 0)
+          }));
+        }
+
+        // Обновляем урон угря с устаревших 15% на точные 10%, если пользователь не задавал своё значение
+        const loadedHp = { ...def.settings.hpLoss, ...(parsed.settings?.hpLoss || {}) };
+        if (loadedHp.eel === 15) {
+          loadedHp.eel = 10;
+        }
+
         return {
           sessions: Array.isArray(parsed.sessions) ? parsed.sessions : def.sessions,
-          shells: Array.isArray(parsed.shells) && parsed.shells.length ? parsed.shells : def.shells,
+          shells: shellsList,
           lumps: { ...def.lumps, ...(parsed.lumps || {}) },
+          puTracker: { ...def.puTracker, ...(parsed.puTracker || {}) },
           settings: {
             points: { ...def.settings.points, ...(parsed.settings?.points || {}) },
             useShellTablePoints: Boolean(parsed.settings?.useShellTablePoints),
-            hpLoss: { ...def.settings.hpLoss, ...(parsed.settings?.hpLoss || {}) },
+            hpLoss: loadedHp,
             customRules: Array.isArray(parsed.settings?.customRules) ? parsed.settings.customRules : [],
             startingStats: { ...def.settings.startingStats, ...(parsed.settings?.startingStats || {}) }
           }
@@ -815,6 +1170,155 @@
     function formatNum(n) {
       const num = Number(n) || 0;
       return Number.isInteger(num) ? num.toLocaleString('ru-RU') : Number(num.toFixed(2)).toLocaleString('ru-RU');
+    }
+
+    function formatDuration(totalSeconds) {
+      const sec = Math.max(0, Math.round(Number(totalSeconds) || 0));
+      if (sec === 0) return '0 сек';
+      const hours = Math.floor(sec / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      const remSec = sec % 60;
+      const parts = [];
+      if (hours > 0) parts.push(`${hours} ч`);
+      if (mins > 0) parts.push(`${mins} мин`);
+      if (remSec > 0 && hours === 0) parts.push(`${remSec} сек`);
+      return parts.join(' ') || '0 сек';
+    }
+
+    /* =========================================================================
+       МАТЕМАТИКА КАЛЬКУЛЯТОРА ПУ (ПЛАВАТЕЛЬНЫХ УМЕНИЙ)
+       ========================================================================= */
+    function getPuPerDive(level, puState = state.puTracker) {
+      const lvlCfg = PU_LEVELS[level] || PU_LEVELS[5];
+      const base = puState.hasFreeSpace ? lvlCfg.baseFree : lvlCfg.baseFull;
+      const buff = PU_EXP_BUFFS[puState.expBuff] || PU_EXP_BUFFS.none;
+      return Number((base * buff.mult).toFixed(4));
+    }
+
+    function getDiveSeconds(level, puState = state.puTracker) {
+      const lvlCfg = PU_LEVELS[level] || PU_LEVELS[5];
+      return puState.speedBuff ? lvlCfg.durationSec * 0.8 : lvlCfg.durationSec;
+    }
+
+    // Прибавляет N нырков с автопереходом на следующий уровень, если порог превышен
+    function advancePuByDives(divesCount) {
+      const pu = state.puTracker;
+      let lvl = Math.min(9, Math.max(5, Number(pu.level) || 5));
+      let cur = Math.max(0, Number(pu.exactPu) || 0);
+
+      for (let i = 0; i < divesCount; i++) {
+        const gain = getPuPerDive(lvl, pu);
+        cur = Number((cur + gain).toFixed(4));
+        const threshold = PU_LEVELS[lvl].threshold;
+        if (threshold && cur >= threshold && lvl < 9) {
+          cur = Number((cur - threshold).toFixed(4));
+          lvl++;
+        }
+      }
+
+      pu.level = lvl;
+      pu.exactPu = cur;
+      if (pu.targetLevel <= lvl && lvl < 9) {
+        pu.targetLevel = lvl + 1;
+      } else if (lvl === 9) {
+        pu.targetLevel = 9;
+      }
+    }
+
+    function computePuPlan(pileShellsPu = 0) {
+      const pu = state.puTracker;
+      const curLvl = Math.min(9, Math.max(5, Number(pu.level) || 5));
+      const curCfg = PU_LEVELS[curLvl];
+      const exactPu = Math.max(0, Number(pu.exactPu) || 0);
+      const flooredPu = Math.floor(exactPu + 1e-9);
+      const curGain = getPuPerDive(curLvl, pu);
+      const curSec = getDiveSeconds(curLvl, pu);
+
+      // Если уже 9 уровень (максимум)
+      if (curLvl >= 9) {
+        return {
+          isMax: true,
+          curLvl: 9,
+          targetLvl: 9,
+          exactPu,
+          flooredPu,
+          curThreshold: null,
+          curPct: 100,
+          curGain,
+          curSec,
+          totalNeededPu: 0,
+          totalDives: 0,
+          totalSeconds: 0,
+          stages: [],
+          savedDivesByShells: 0
+        };
+      }
+
+      const targetLvl = Math.min(9, Math.max(curLvl + 1, Number(pu.targetLevel) || (curLvl + 1)));
+      const stages = [];
+      let totalNeededPu = 0;
+      let totalDives = 0;
+      let totalSeconds = 0;
+
+      for (let lvl = curLvl; lvl < targetLvl; lvl++) {
+        const cfg = PU_LEVELS[lvl];
+        const startVal = lvl === curLvl ? Math.min(cfg.threshold, exactPu) : 0;
+        const needed = Math.max(0, Number((cfg.threshold - startVal).toFixed(4)));
+        const gain = getPuPerDive(lvl, pu);
+        const secPerDive = getDiveSeconds(lvl, pu);
+        const dives = needed > 0 ? Math.ceil((needed - 1e-9) / gain) : 0;
+        const stageSec = dives * secPerDive;
+
+        stages.push({
+          fromLvl: lvl,
+          toLvl: lvl + 1,
+          threshold: cfg.threshold,
+          needed,
+          gain,
+          dives,
+          seconds: stageSec
+        });
+
+        totalNeededPu = Number((totalNeededPu + needed).toFixed(2));
+        totalDives += dives;
+        totalSeconds += stageSec;
+      }
+
+      // Расчёт экономии нырков, если съесть накопленные ракушки прямо сейчас
+      let savedDivesByShells = 0;
+      if (pileShellsPu > 0 && totalDives > 0) {
+        let remShellPu = pileShellsPu;
+        let simDives = 0;
+        for (let lvl = curLvl; lvl < targetLvl; lvl++) {
+          const cfg = PU_LEVELS[lvl];
+          const baseStart = lvl === curLvl ? Math.min(cfg.threshold, exactPu) : 0;
+          const afterShells = Math.min(cfg.threshold, baseStart + remShellPu);
+          remShellPu = Math.max(0, remShellPu - (afterShells - baseStart));
+          const neededAfter = Math.max(0, Number((cfg.threshold - afterShells).toFixed(4)));
+          const gain = getPuPerDive(lvl, pu);
+          simDives += neededAfter > 0 ? Math.ceil((neededAfter - 1e-9) / gain) : 0;
+        }
+        savedDivesByShells = Math.max(0, totalDives - simDives);
+      }
+
+      const curPct = curCfg.threshold ? Math.min(100, (exactPu / curCfg.threshold) * 100) : 100;
+
+      return {
+        isMax: false,
+        curLvl,
+        targetLvl,
+        exactPu,
+        flooredPu,
+        curThreshold: curCfg.threshold,
+        curPct,
+        curGain,
+        curSec,
+        totalNeededPu,
+        totalDives,
+        totalSeconds,
+        stages,
+        savedDivesByShells
+      };
     }
 
     function formatPct(part, total) {
@@ -1160,8 +1664,10 @@
        ========================================================================= */
     function renderAll() {
       const stats = computeStats();
+      const puPlan = computePuPlan(stats.shellsPilePU);
       renderHeader(stats);
-      renderOverview(stats);
+      renderOverview(stats, puPlan);
+      renderPuCalculator(stats, puPlan);
       renderShellsAndLumps(stats);
       renderSettings();
       renderJournal();
@@ -1172,7 +1678,21 @@
       document.getElementById('journal-count-badge').textContent = state.sessions.length;
     }
 
-    function renderOverview(stats) {
+    function renderOverview(stats, puPlan) {
+      // Мини-виджет ПУ на главной
+      document.getElementById('mini-pu-level').textContent = `${puPlan.curLvl} ур. ПУ`;
+      if (puPlan.isMax) {
+        document.getElementById('mini-pu-progress-text').textContent = `${formatNum(puPlan.flooredPu)} (макс. уровень)`;
+        document.getElementById('mini-pu-exact-text').textContent = `(точное: ${formatNum(puPlan.exactPu)})`;
+        document.getElementById('mini-pu-remaining').textContent = `+${formatNum(puPlan.curGain)} ПУ за нырок`;
+        document.getElementById('mini-pu-bar').style.width = '100%';
+      } else {
+        document.getElementById('mini-pu-progress-text').textContent = `${formatNum(puPlan.flooredPu)} / ${formatNum(puPlan.curThreshold)}`;
+        document.getElementById('mini-pu-exact-text').textContent = `(точное: ${formatNum(puPlan.exactPu)})`;
+        document.getElementById('mini-pu-remaining').textContent = `До ${puPlan.targetLvl} ур.: ${formatNum(puPlan.totalDives)} ныр. (~${formatDuration(puPlan.totalSeconds)})`;
+        document.getElementById('mini-pu-bar').style.width = `${puPlan.curPct.toFixed(1)}%`;
+      }
+
       // KPI
       document.getElementById('kpi-total').textContent = formatNum(stats.totalDives);
       document.getElementById('kpi-sessions-sub').textContent = `${state.sessions.length} сессий в журнале`;
@@ -1295,6 +1815,135 @@
     }
 
     /* =========================================================================
+       РЕНДЕРИНГ ВКЛАДКИ «КАЛЬКУЛЯТОР ПУ»
+       ========================================================================= */
+    function renderPuCalculator(stats, plan) {
+      const pu = state.puTracker;
+
+      // Селект текущего уровня
+      document.getElementById('pu-current-level').value = String(plan.curLvl);
+
+      // Селект целевого уровня (все уровни выше текущего вплоть до 9)
+      const targetSel = document.getElementById('pu-target-level');
+      if (plan.curLvl >= 9) {
+        targetSel.innerHTML = `<option value="9">9 уровень (достигнут максимум)</option>`;
+        targetSel.disabled = true;
+      } else {
+        targetSel.disabled = false;
+        const opts = [];
+        for (let lvl = plan.curLvl + 1; lvl <= 9; lvl++) {
+          opts.push(`<option value="${lvl}">${lvl} уровень</option>`);
+        }
+        targetSel.innerHTML = opts.join('');
+        targetSel.value = String(plan.targetLvl);
+      }
+
+      // Поле точного значения
+      const exactInput = document.getElementById('pu-exact-input');
+      if (document.activeElement !== exactInput) {
+        exactInput.value = Number(plan.exactPu.toFixed(2));
+      }
+      document.getElementById('pu-threshold-hint').textContent = plan.curThreshold ? `из ${formatNum(plan.curThreshold)}` : 'максимум';
+
+      // Полоска и шапка
+      document.getElementById('pu-hero-badge').textContent = plan.isMax
+        ? 'Уровень 9 (Максимум)'
+        : `Уровень ${plan.curLvl} → ${plan.targetLvl}`;
+
+      document.getElementById('pu-display-floor').textContent = plan.curThreshold
+        ? `${formatNum(plan.flooredPu)} / ${formatNum(plan.curThreshold)}`
+        : `${formatNum(plan.flooredPu)} (МАКС)`;
+      document.getElementById('pu-display-exact').textContent = `(точное значение: ${formatNum(plan.exactPu)})`;
+      document.getElementById('pu-display-pct').textContent = `${plan.curPct.toFixed(1)}%`;
+      document.getElementById('pu-progress-bar').style.width = `${plan.curPct.toFixed(1)}%`;
+
+      // Карточки результатов
+      document.getElementById('pu-res-needed').textContent = plan.isMax ? '0 ПУ' : `${formatNum(plan.totalNeededPu)} ПУ`;
+      document.getElementById('pu-res-target-sub').textContent = plan.isMax ? 'Достигнут 9 уровень' : `До ${plan.targetLvl} уровня ПУ`;
+
+      document.getElementById('pu-res-dives').textContent = plan.isMax ? '0 нырков' : `${formatNum(plan.totalDives)} нырков`;
+      document.getElementById('pu-res-rate-sub').textContent = `Сейчас: +${formatNum(plan.curGain)} ПУ за нырок`;
+
+      document.getElementById('pu-res-time').textContent = plan.isMax ? '0 сек' : formatDuration(plan.totalSeconds);
+      document.getElementById('pu-res-dive-dur').textContent = `1 нырок = ${formatDuration(plan.curSec)}`;
+
+      document.getElementById('pu-res-shells-pu').textContent = `+${formatNum(stats.shellsPilePU)} ПУ`;
+      document.getElementById('pu-res-shells-save').textContent = plan.isMax
+        ? 'Уровень уже максимальный'
+        : `Сэкономит ~${formatNum(plan.savedDivesByShells)} нырков`;
+
+      // Переключатели места во рту
+      const freeBtn = document.getElementById('btn-mouth-free');
+      const fullBtn = document.getElementById('btn-mouth-full');
+      freeBtn.className = pu.hasFreeSpace
+        ? 'p-3 rounded-xl border text-left transition bg-cyan-500/20 border-cyan-400/50 text-cyan-100'
+        : 'p-3 rounded-xl border text-left transition bg-lake-950/60 border-slate-700/50 text-slate-400 hover:text-slate-200';
+      fullBtn.className = !pu.hasFreeSpace
+        ? 'p-3 rounded-xl border text-left transition bg-amber-500/20 border-amber-400/50 text-amber-100'
+        : 'p-3 rounded-xl border text-left transition bg-lake-950/60 border-slate-700/50 text-slate-400 hover:text-slate-200';
+
+      document.getElementById('pu-auto-track').checked = Boolean(pu.autoTrackLogs);
+
+      // Взаимоисключающие баффы на опыт
+      document.getElementById('pu-exp-buff-list').innerHTML = Object.entries(PU_EXP_BUFFS).map(([key, b]) => {
+        const active = pu.expBuff === key;
+        return `
+          <button type="button" onclick="updatePuExpBuff('${key}')"
+            class="w-full p-3 rounded-xl border text-left transition flex items-center justify-between gap-3 ${
+              active
+                ? 'bg-amber-400/15 border-amber-300/50 text-amber-100 shadow-sm'
+                : 'bg-lake-950/60 border-slate-700/50 text-slate-300 hover:bg-lake-800/50'
+            }">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="text-lg shrink-0">${b.icon}</span>
+              <div class="min-w-0">
+                <div class="text-xs sm:text-sm font-bold truncate">${b.label}</div>
+                <div class="text-[11px] text-slate-400 truncate">${b.desc}</div>
+              </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold shrink-0 ${
+              active ? 'bg-amber-300 text-lake-950' : 'bg-slate-800 text-slate-300'
+            }">${b.badge}</span>
+          </button>
+        `;
+      }).join('');
+
+      document.getElementById('pu-speed-buff').checked = Boolean(pu.speedBuff);
+
+      // Справочная таблица уровней
+      document.getElementById('pu-reference-tbody').innerHTML = Object.entries(PU_LEVELS).map(([lvlStr, cfg]) => {
+        const isCurrent = Number(lvlStr) === plan.curLvl;
+        return `
+          <tr class="${isCurrent ? 'bg-cyan-500/15 text-cyan-200 font-bold' : ''}">
+            <td class="py-1.5 pr-2">${lvlStr} ур.</td>
+            <td class="py-1.5 px-2">${cfg.threshold ? formatNum(cfg.threshold) : '∞'}</td>
+            <td class="py-1.5 px-2">+${formatNum(cfg.baseFree)}</td>
+            <td class="py-1.5 px-2">+${formatNum(cfg.baseFull)}</td>
+            <td class="py-1.5 pl-2 text-right">${formatDuration(cfg.durationSec)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Поэтапная разбивка (если выбрано 2+ уровня)
+      const stagesCard = document.getElementById('pu-stages-card');
+      if (plan.stages.length > 1) {
+        stagesCard.classList.remove('hidden');
+        document.getElementById('pu-stages-list').innerHTML = plan.stages.map(st => `
+          <div class="p-3.5 rounded-xl bg-lake-950/65 border border-cyan-400/20">
+            <div class="flex items-center justify-between text-xs font-bold text-cyan-200 mb-1">
+              <span>Этап ${st.fromLvl} → ${st.toLvl} ур.</span>
+              <span>+${formatNum(st.gain)} ПУ/ныр.</span>
+            </div>
+            <div class="text-lg font-extrabold text-slate-100">${formatNum(st.dives)} нырков</div>
+            <div class="text-xs text-slate-400 mt-0.5">Остаток: ${formatNum(st.needed)} ПУ • ${formatDuration(st.seconds)}</div>
+          </div>
+        `).join('');
+      } else {
+        stagesCard.classList.add('hidden');
+      }
+    }
+
+    /* =========================================================================
        РЕНДЕРИНГ ВКЛАДКИ «РАКУШКИ И КОМКИ»
        ========================================================================= */
     function renderShellsAndLumps(stats) {
@@ -1325,18 +1974,31 @@
         const caught = Math.max(0, Number(sh.caught) || 0);
         const used = Math.max(0, Number(sh.used) || 0);
         const inStock = Math.max(0, caught - used);
-        const pilePU = inStock * (Number(sh.pu) || 0);
-        const allPU = caught * (Number(sh.pu) || 0);
+        const puVal = Number(sh.pu) || 0;
+        const pilePU = inStock * puVal;
+        const allPU = caught * puVal;
+        const svgIcon = SHELL_SVGS[sh.iconKey] || SHELL_SVGS.custom;
+        const effectText = sh.effectNote || (puVal > 0 ? `Даёт +${puVal} к ПУ при съедании` : 'Особый эффект без ПУ');
 
         return `
           <tr class="hover:bg-lake-800/35 transition">
             <td class="py-2.5 pr-3">
-              <input type="text" value="${escapeHtml(sh.name)}" onchange="updateShellField('${sh.id}', 'name', this.value)"
-                class="w-full min-w-[140px] px-2.5 py-1.5 rounded-lg bg-lake-950/70 border border-slate-700/70 focus:border-amber-300/60 outline-none text-slate-100 text-sm font-medium" />
+              <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-lake-950/90 border border-slate-700/70 flex items-center justify-center shrink-0">
+                  ${svgIcon}
+                </div>
+                <div class="flex-1 min-w-[180px]">
+                  <input type="text" value="${escapeHtml(sh.name)}" onchange="updateShellField('${sh.id}', 'name', this.value)"
+                    class="w-full px-2.5 py-1 rounded-lg bg-lake-950/70 border border-slate-700/70 focus:border-amber-300/60 outline-none text-slate-100 text-xs sm:text-sm font-semibold" />
+                  <div class="mt-1 px-1 text-[11px] ${puVal > 0 ? 'text-teal-300/90' : 'text-sky-300/90'}">
+                    ${escapeHtml(effectText)}
+                  </div>
+                </div>
+              </div>
             </td>
             <td class="py-2.5 px-2">
-              <input type="number" step="1" min="0" value="${sh.pu}" onchange="updateShellField('${sh.id}', 'pu', this.value)"
-                class="w-20 mx-auto block px-2 py-1.5 rounded-lg bg-lake-950/70 border border-slate-700/70 focus:border-amber-300/60 outline-none text-center text-amber-200 font-semibold text-sm" />
+              <input type="number" step="1" min="0" value="${puVal}" onchange="updateShellField('${sh.id}', 'pu', this.value)"
+                class="w-20 mx-auto block px-2 py-1.5 rounded-lg bg-lake-950/70 border border-slate-700/70 focus:border-amber-300/60 outline-none text-center ${puVal > 0 ? 'text-amber-200' : 'text-slate-400'} font-semibold text-sm" />
             </td>
             <td class="py-2.5 px-2">
               <input type="number" step="0.5" min="0" value="${sh.points}" onchange="updateShellField('${sh.id}', 'points', this.value)"
@@ -1359,8 +2021,8 @@
               </div>
             </td>
             <td class="py-2.5 px-2 text-right font-bold text-slate-100">${formatNum(inStock)}</td>
-            <td class="py-2.5 px-2 text-right font-bold text-amber-300">+${formatNum(pilePU)}</td>
-            <td class="py-2.5 pl-2 text-right font-semibold text-cyan-300">+${formatNum(allPU)}</td>
+            <td class="py-2.5 px-2 text-right font-bold ${pilePU > 0 ? 'text-amber-300' : 'text-slate-500'}">+${formatNum(pilePU)}</td>
+            <td class="py-2.5 pl-2 text-right font-semibold ${allPU > 0 ? 'text-cyan-300' : 'text-slate-500'}">+${formatNum(allPU)}</td>
             <td class="py-2.5 pl-2 text-right">
               ${state.shells.length > 1 ? `<button type="button" onclick="deleteShellType('${sh.id}')" title="Удалить вид" class="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-500 hover:text-rose-300 transition">✕</button>` : ''}
             </td>
@@ -1756,9 +2418,14 @@
         }))
       };
       state.sessions.push(newSession);
-      saveState();
 
       const addedCount = previewDives.length;
+      if (state.puTracker.autoTrackLogs) {
+        advancePuByDives(addedCount);
+      }
+
+      saveState();
+
       document.getElementById('parser-input').value = '';
       previewDives = [];
       previewCancelledCount = 0;
@@ -1766,6 +2433,78 @@
       renderAll();
       showToast(`Добавлено нырков: ${addedCount}!`, 'success');
     });
+
+    // Обработчики калькулятора ПУ
+    window.updatePuLevel = function(val) {
+      const lvl = Math.min(9, Math.max(5, Number(val) || 5));
+      state.puTracker.level = lvl;
+      if (lvl >= 9) {
+        state.puTracker.targetLevel = 9;
+      } else if (state.puTracker.targetLevel <= lvl) {
+        state.puTracker.targetLevel = lvl + 1;
+      }
+      const maxThr = PU_LEVELS[lvl].threshold;
+      if (maxThr && state.puTracker.exactPu >= maxThr) {
+        state.puTracker.exactPu = maxThr - 1;
+      }
+      saveState();
+      renderAll();
+    };
+
+    window.updatePuTargetLevel = function(val) {
+      const cur = Number(state.puTracker.level) || 5;
+      state.puTracker.targetLevel = Math.min(9, Math.max(cur + 1, Number(val) || (cur + 1)));
+      saveState();
+      renderAll();
+    };
+
+    window.updatePuExactValue = function(val) {
+      const num = Math.max(0, Number(val) || 0);
+      const cur = Number(state.puTracker.level) || 5;
+      const thr = PU_LEVELS[cur].threshold;
+      state.puTracker.exactPu = thr ? Math.min(thr, num) : num;
+      saveState();
+      renderAll();
+    };
+
+    window.updatePuMouthFree = function(isFree) {
+      state.puTracker.hasFreeSpace = Boolean(isFree);
+      saveState();
+      renderAll();
+    };
+
+    window.updatePuExpBuff = function(buffKey) {
+      if (!PU_EXP_BUFFS[buffKey]) return;
+      state.puTracker.expBuff = buffKey;
+      saveState();
+      renderAll();
+    };
+
+    window.updatePuSpeedBuff = function(checked) {
+      state.puTracker.speedBuff = Boolean(checked);
+      saveState();
+      renderAll();
+    };
+
+    window.updatePuAutoTrack = function(checked) {
+      state.puTracker.autoTrackLogs = Boolean(checked);
+      saveState();
+      renderAll();
+    };
+
+    window.simulatePuDives = function(count) {
+      advancePuByDives(count);
+      saveState();
+      renderAll();
+      showToast(`Прибавлено ${count} ныр. к прогрессу ПУ`, 'info');
+    };
+
+    window.resetPuSync = function() {
+      state.puTracker.exactPu = 0;
+      saveState();
+      renderAll();
+      showToast('Счётчик ПУ на текущем уровне сброшен на 0', 'info');
+    };
 
     // Вставить пример истории (сочетает кота, кошку, ложные пустые фразы и лишние действия)
     document.getElementById('btn-load-sample').addEventListener('click', () => {
